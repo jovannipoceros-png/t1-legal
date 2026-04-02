@@ -1,15 +1,28 @@
 'use client'
 import { useState } from 'react'
 
+type Solicitud = {
+  id: string
+  tipo: string
+  empresa: string
+  estado: string
+  fecha: string
+  paso: number
+  flujo: string
+  confidencial: boolean
+  resumen: string
+  solicitante?: string
+}
+
 export default function Portal() {
   const [vistaLider, setVistaLider] = useState(false)
   const pasos = ['Recibida','En revision','En negociacion','Lista para firma','Cerrada']
 
-  const misSolicitudes = [
+  const misSolicitudes: Solicitud[] = [
     { id:'C-2026-003', tipo:'Anexo', empresa:'T1.com', estado:'Pendiente', fecha:'03/04/2026', paso:0, flujo:'B', confidencial:true, resumen:'Solicitud recibida. El area legal la revisara pronto.' },
   ]
 
-  const solicitudesEquipo = [
+  const solicitudesEquipo: Solicitud[] = [
     { id:'C-2026-001', tipo:'Contrato de servicios', empresa:'T1.com', estado:'En proceso', fecha:'01/04/2026', paso:2, flujo:'A', confidencial:false, solicitante:'Colaborador — Ultima Milla', resumen:'En revision legal. Se detectaron 3 clausulas de riesgo.' },
     { id:'C-2026-002', tipo:'Convenio de Confidencialidad', empresa:'Claro Pagos', estado:'Pendiente', fecha:'02/04/2026', paso:0, flujo:'B', confidencial:false, solicitante:'Colaborador — Marketing', resumen:'Solicitud recibida. Pendiente de asignacion.' },
     { id:'C-2026-003', tipo:'Anexo', empresa:'T1.com', estado:'Pendiente', fecha:'03/04/2026', paso:0, flujo:'B', confidencial:true, solicitante:'Tu solicitud', resumen:'Solicitud confidencial.' },
@@ -41,7 +54,7 @@ export default function Portal() {
           <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
             <button onClick={() => setVistaLider(!vistaLider)}
               style={{ background:vistaLider?'#E8321A':'rgba(255,255,255,0.1)', color:'white', border:'1px solid rgba(255,255,255,0.2)', padding:'6px 14px', borderRadius:'6px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>
-              {vistaLider?'👤 Mi vista':'👥 Vista lider'}
+              {vistaLider?'Mi vista':'Vista lider'}
             </button>
             <a href="/login" style={{ color:'#B0C4DE', fontSize:'13px', textDecoration:'none', border:'1px solid rgba(255,255,255,0.2)', padding:'4px 12px', borderRadius:'6px' }}>Salir</a>
           </div>
@@ -54,9 +67,7 @@ export default function Portal() {
             <h1 style={{ color:'#0F2447', fontSize:'26px', fontWeight:700, margin:'0 0 4px' }}>
               {vistaLider?'Solicitudes de mi equipo':'Mis Solicitudes'}
             </h1>
-            <p style={{ color:'#888', margin:0 }}>
-              {vistaLider?'Vista de lider — Todas las solicitudes de tu area':'Seguimiento en tiempo real de tus contratos'}
-            </p>
+            <p style={{ color:'#888', margin:0 }}>Seguimiento en tiempo real de tus contratos</p>
           </div>
           <a href="/solicitar" style={{ background:'#E8321A', color:'white', padding:'12px 24px', borderRadius:'10px', textDecoration:'none', fontWeight:700, fontSize:'14px' }}>+ Nueva solicitud</a>
         </div>
@@ -77,19 +88,18 @@ export default function Portal() {
                 <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px', flexWrap:'wrap' }}>
                   <span style={{ background:'#0F2447', color:'white', fontSize:'12px', fontWeight:700, padding:'3px 10px', borderRadius:'20px' }}>{s.id}</span>
                   <span style={{ background:s.flujo==='A'?'#FEF3C7':'#EFF6FF', color:s.flujo==='A'?'#92400E':'#1D4ED8', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>
-                    {s.flujo==='A'?'📄 Documento del socio':'⚖️ Documento T1'}
+                    {s.flujo==='A'?'Documento del socio':'Documento T1'}
                   </span>
-                  {s.confidencial && <span style={{ background:'#FFF5F5', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', border:'1px solid #FFD0CC' }}>🔒 Confidencial</span>}
+                  {s.confidencial && <span style={{ background:'#FFF5F5', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', border:'1px solid #FFD0CC' }}>Confidencial</span>}
                   <span style={{ background:s.estado==='En proceso'?'#EFF6FF':s.estado==='Pendiente'?'#FEF3C7':'#F0FDF4', color:s.estado==='En proceso'?'#1D4ED8':s.estado==='Pendiente'?'#92400E':'#166534', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.estado}</span>
                 </div>
                 <h3 style={{ color:'#0F2447', fontSize:'16px', fontWeight:700, margin:'0 0 4px' }}>{s.tipo}</h3>
                 <p style={{ color:'#888', fontSize:'13px', margin:'0 0 4px' }}>{s.empresa} — Enviada el {s.fecha}</p>
-                {vistaLider && (s as any).solicitante && <p style={{ color:'#888', fontSize:'12px', margin:0 }}>👤 {(s as any).solicitante}</p>}
+                {vistaLider && s.solicitante && <p style={{ color:'#888', fontSize:'12px', margin:0 }}>{s.solicitante}</p>}
                 {s.resumen && !s.confidencial && <p style={{ color:'#555', fontSize:'12px', margin:'6px 0 0', fontStyle:'italic' }}>{s.resumen}</p>}
-                {s.confidencial && vistaLider && <p style={{ color:'#C42A15', fontSize:'12px', margin:'6px 0 0', fontWeight:600 }}>🔒 Contenido confidencial — Solo visible para el solicitante y Legal</p>}
+                {s.confidencial && vistaLider && <p style={{ color:'#C42A15', fontSize:'12px', margin:'6px 0 0', fontWeight:600 }}>Contenido confidencial</p>}
               </div>
             </div>
-
             {!s.confidencial && (
               <div>
                 <p style={{ color:'#0F2447', fontSize:'13px', fontWeight:600, marginBottom:'16px' }}>Seguimiento:</p>
