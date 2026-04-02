@@ -27,7 +27,7 @@ export default function Solicitar() {
   const areas = ['T1 Pagos','T1 Envios','T1 Tienda','T1 Score','Ultima Milla','Marketing','RH','TI','Juridico','Otro']
   const tipos = ['Contrato','Convenio de Confidencialidad','Convenio Modificatorio','Anexo','Otro']
   const idiomas = ['Español','Inglés','Español - Inglés','Otro']
-  const firmas = ['Electronica','Fisica','SORA','Otro']
+  const firmas = ['Electronica','Fisica']
   const total = 5
 
   const esAccesoTotal = form.area==='Juridico'
@@ -274,6 +274,7 @@ export default function Solicitar() {
                 <div style={{ marginBottom:'24px' }}>
                   <Label text="Nacionalidad *" />
                   <Select k="nacionalidad" options={['Mexicana','Estadounidense','Colombiana','Española','Otra']} />
+  {form.nacionalidad==='Otra' && <div style={{ marginTop:'8px' }}><Input k="nacionalidad_otro" placeholder="Indica la nacionalidad..." /></div>}
                 </div>
                 {form.nacionalidad && form.nacionalidad!=='Mexicana' && (
                   <div style={{ background:'#EFF6FF', border:'1px solid #BFDBFE', borderRadius:'10px', padding:'12px 16px', marginBottom:'16px' }}>
@@ -335,7 +336,13 @@ export default function Solicitar() {
                     <div style={{ marginBottom:'16px' }}>
                       <Label text="Tipo de firma" />
                       <Select k="tipo_firma" options={firmas} />
-                      {form.tipo_firma==='Otro' && <div style={{ marginTop:'8px' }}><Input k="plataforma_firma" placeholder="Especifica la plataforma de firma..." /></div>}
+                      {form.tipo_firma==='Electronica' && (
+    <div style={{ marginTop:'8px' }}>
+      <Label text="Plataforma de firma electronica" />
+      <Select k="plataforma_firma" options={['SORA','Otra']} />
+      {form.plataforma_firma==='Otra' && <div style={{ marginTop:'8px' }}><Input k="plataforma_firma_otro" placeholder="Indica cual plataforma..." /></div>}
+    </div>
+  )}
                     </div>
                   </div>
                 )}
