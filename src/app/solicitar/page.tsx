@@ -56,7 +56,7 @@ export default function Solicitar() {
       const resultado = await guardarSolicitud({ ...form, flujo })
       setEnviado(resultado.id)
     } catch (e) {
-      alert('Error al enviar. Intenta de nuevo.')
+      console.error('Error Supabase:', e); alert('Error: ' + (e as any).message)
     } finally {
       setEnviando(false)
     }
