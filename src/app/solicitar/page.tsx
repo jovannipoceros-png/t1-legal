@@ -77,7 +77,7 @@ export default function Solicitar() {
               <div>
                 <h2 style={{ color: '#0F2447', fontSize: '20px', fontWeight: 700, margin: '0 0 24px' }}>Datos del solicitante</h2>
                 <div style={{ marginBottom: '16px' }}><Label text="Nombre completo *" /><Input k="nombre" placeholder="Nombre y Apellido" /></div>
-                <div style={{ marginBottom: '16px' }}><Label text="Correo electronico *" /><Input k="correo" placeholder="juan@t1.com" type="email" /></div>
+                <div style={{ marginBottom: '16px' }}><Label text="Correo electronico *" /><Input k="correo" placeholder="correo@empresa.com" type="email" /></div>
                 <div style={{ marginBottom: '16px' }}>
                   <Label text="Area *" />
                   <Select k="area" options={areas} />
