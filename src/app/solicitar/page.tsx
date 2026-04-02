@@ -1,4 +1,5 @@
 'use client'
+import { guardarSolicitud } from '@/lib/supabase/solicitudes'
 import { useState } from 'react'
 
 export default function Solicitar() {
@@ -20,9 +21,23 @@ export default function Solicitar() {
     confidencial: false,
   })
   const [archivos, setArchivos] = useState<File[]>([])
+  const [enviando, setEnviando] = useState(false)
+  const [enviado, setEnviado] = useState<string|null>(null)
   const [analizando, setAnalizando] = useState(false)
   const [analisisIA, setAnalisisIA] = useState<any>(null)
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
+
+  const enviar = async () => {
+    setEnviando(true)
+    try {
+      const resultado = await guardarSolicitud({ ...form, flujo })
+      setEnviado(resultado.id)
+    } catch (e) {
+      alert('Error al enviar. Intenta de nuevo.')
+    } finally {
+      setEnviando(false)
+    }
+  }
 
   const areas = ['T1 Pagos','T1 Envios','T1 Tienda','T1 Score','Ultima Milla','Marketing','RH','TI','Juridico','Otro']
   const tipos = ['Contrato','Convenio de Confidencialidad','Convenio Modificatorio','Anexo','Otro']
@@ -92,6 +107,25 @@ export default function Solicitar() {
   const Btn = ({ label, onClick, secondary=false }: { label: string, onClick: () => void, secondary?: boolean }) => (
     <button onClick={onClick} style={{ padding:'12px 28px', borderRadius:'10px', border:secondary?'1.5px solid #E8E8E8':'none', background:secondary?'white':'#E8321A', color:secondary?'#666':'white', fontWeight:700, fontSize:'14px', cursor:'pointer' }}>{label}</button>
   )
+
+  if (enviado) {
+    return (
+      <div style={{ minHeight:'100vh', background:'#F8F8F8', fontFamily:'sans-serif', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ background:'white', borderRadius:'16px', padding:'48px', maxWidth:'500px', width:'100%', textAlign:'center', boxShadow:'0 2px 16px rgba(0,0,0,0.06)' }}>
+          <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:'#F0FDF4', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'28px' }}>✓</div>
+          <p style={{ color:'#888', fontSize:'14px', margin:'0 0 20px' }}>Tu solicitud fue registrada exitosamente</p>
+          <div style={{ background:'#F8F8F8', borderRadius:'10px', padding:'16px', marginBottom:'24px' }}>
+            <p style={{ color:'#888', fontSize:'12px', margin:'0 0 4px' }}>Numero de expediente</p>
+            <p style={{ color:'#E8321A', fontSize:'24px', fontWeight:900, margin:0 }}>{enviado}</p>
+          </div>
+          <p style={{ color:'#888', fontSize:'13px', margin:'0 0 20px' }}>El area legal revisara tu solicitud y te notificara por correo. Puedes dar seguimiento en tu portal.</p>
+          <a href='/login' style={{ display:'block', background:'#0F2447', color:'white', padding:'13px', borderRadius:'10px', textDecoration:'none', fontWeight:700, fontSize:'14px' }}>
+            Ver mis solicitudes →
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   if (paso===0) {
     return (
@@ -444,8 +478,8 @@ export default function Solicitar() {
 
                 <div style={{ display:'flex', justifyContent:'space-between' }}>
                   <Btn label="← Anterior" onClick={() => setPaso(4)} secondary />
-                  <button style={{ padding:'13px 32px', borderRadius:'10px', border:'none', background:'#E8321A', color:'white', fontWeight:700, fontSize:'15px', cursor:'pointer' }}>
-                    Enviar solicitud ✓
+                  <button onClick={enviar} disabled={enviando} style={{ padding:'13px 32px', borderRadius:'10px', border:'none', background:'#E8321A', color:'white', fontWeight:700, fontSize:'15px', cursor:enviando?'default':'pointer', opacity:enviando?0.7:1 }}>
+                    {enviando?'Enviando...':'Enviar solicitud ✓'}
                   </button>
                 </div>
               </div>
