@@ -84,7 +84,7 @@ export default function Portal() {
                 </div>
                 <h3 style={{ color:'#0F2447', fontSize:'16px', fontWeight:700, margin:'0 0 4px' }}>{s.tipo}</h3>
                 <p style={{ color:'#888', fontSize:'13px', margin:'0 0 4px' }}>{s.empresa} — Enviada el {s.fecha}</p>
-                {vistaLider && <p style={{ color:'#888', fontSize:'12px', margin:0 }}>👤 {s.solicitante}</p>}
+                {vistaLider && (s as any).solicitante && <p style={{ color:'#888', fontSize:'12px', margin:0 }}>👤 {(s as any).solicitante}</p>}
                 {s.resumen && !s.confidencial && <p style={{ color:'#555', fontSize:'12px', margin:'6px 0 0', fontStyle:'italic' }}>{s.resumen}</p>}
                 {s.confidencial && vistaLider && <p style={{ color:'#C42A15', fontSize:'12px', margin:'6px 0 0', fontWeight:600 }}>🔒 Contenido confidencial — Solo visible para el solicitante y Legal</p>}
               </div>
