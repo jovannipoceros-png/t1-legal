@@ -1,0 +1,56 @@
+import { createClient } from './client'
+
+export async function guardarSolicitud(form: any) {
+  const supabase = createClient()
+  const year = new Date().getFullYear()
+  const timestamp = Date.now().toString().slice(-4)
+  const id = `C-${year}-${timestamp}`
+  const { data, error } = await supabase.from('solicitudes').insert([{
+    id,
+    nombre: form.nombre,
+    correo: form.correo,
+    area: form.area === 'Otro' ? form.area_otro : form.area,
+    empresa_t1: form.empresa_t1,
+    es_lider: form.es_lider,
+    lider_nombre: form.lider_nombre,
+    lider_correo: form.lider_correo,
+    flujo: form.flujo,
+    tipo_solicitud: form.tipo_solicitud === 'Otro' ? form.tipo_solicitud_otro : form.tipo_solicitud,
+    descripcion: form.descripcion,
+    idioma: form.idioma === 'Otro' ? form.idioma_otro : form.idioma,
+    prioridad: form.prioridad,
+    fecha_limite: form.fecha_limite,
+    confidencial: form.confidencial,
+    nombre_empresa: form.nombre_empresa,
+    rfc: form.rfc,
+    apoderado: form.apoderado,
+    nacionalidad: form.nacionalidad,
+    tiene_contrato_previo: form.tiene_contrato_previo,
+    requiere_traduccion: form.requiere_traduccion,
+    idioma_traduccion: form.idioma_traduccion,
+    condiciones_aplican: form.condiciones_aplican,
+    vigencia: form.vigencia,
+    contraprestacion: form.contraprestacion,
+    plazo_pago: form.plazo_pago,
+    tipo_dias_pago: form.tipo_dias_pago,
+    tipo_firma: form.tipo_firma,
+    condiciones_especiales: form.condiciones_especiales,
+    estado: 'Pendiente',
+  }]).select()
+  if (error) throw error
+  return { id, data }
+}
+
+export async function obtenerSolicitudes() {
+  const supabase = createClient()
+  const { data, error } = await supabase.from('solicitudes').select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function obtenerSolicitudesPorCorreo(correo: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase.from('solicitudes').select('*').eq('correo', correo).order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
