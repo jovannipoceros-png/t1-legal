@@ -1,6 +1,6 @@
 'use client'
-import { guardarSolicitud } from '@/lib/supabase/solicitudes'
 import { useState } from 'react'
+import { guardarSolicitud } from '@/lib/supabase/solicitudes'
 
 export default function Solicitar() {
   const [paso, setPaso] = useState(0)
