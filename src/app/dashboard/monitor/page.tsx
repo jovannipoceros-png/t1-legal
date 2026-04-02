@@ -1,0 +1,1 @@
+export default function Monitor() { return <div style={{padding:'32px'}}><h1 style={{color:'#0F2447',fontSize:'24px',fontWeight:700}}>Monitor Legal</h1><p style={{color:'#888'}}>Cargando...</p></div> }

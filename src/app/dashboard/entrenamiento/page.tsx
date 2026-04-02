@@ -1,0 +1,1 @@
+export default function Entrenamiento() { return <div style={{padding:'32px'}}><h1 style={{color:'#0F2447',fontSize:'24px',fontWeight:700}}>Entrenamiento</h1><p style={{color:'#888'}}>Cargando...</p></div> }
