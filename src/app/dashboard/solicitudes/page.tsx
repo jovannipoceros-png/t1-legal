@@ -1,20 +1,22 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { obtenerSolicitudes } from '@/lib/supabase/solicitudes'
 
 export default function Solicitudes() {
+  const [solicitudes, setSolicitudes] = useState<any[]>([])
   const [filtro, setFiltro] = useState('todas')
   const [busqueda, setBusqueda] = useState('')
+  const [cargando, setCargando] = useState(true)
 
-  const solicitudes = [
-    { id:'C-2026-001', nombre:'Carlos Mendoza', area:'Ultima Milla', empresa_t1:'T1.com', tipo:'Contrato de servicios', prioridad:'Alta', estado:'En proceso', flujo:'A', riesgos:3, confidencial:false, fecha:'01/04/2026', resumen_riesgo:'Penalizacion 50% valor total · Pago 90 dias sin penalizacion · Vigencia indefinida' },
-    { id:'C-2026-002', nombre:'Laura Reyes', area:'Marketing', empresa_t1:'Claro Pagos', tipo:'Convenio de Confidencialidad', prioridad:'Media', estado:'Pendiente', flujo:'B', riesgos:0, confidencial:false, fecha:'02/04/2026', resumen_riesgo:'' },
-    { id:'C-2026-003', nombre:'Roberto Salas', area:'Comercial', empresa_t1:'T1.com', tipo:'Anexo', prioridad:'Baja', estado:'Pendiente', flujo:'B', riesgos:0, confidencial:true, fecha:'03/04/2026', resumen_riesgo:'' },
-    { id:'C-2026-004', nombre:'Diana Torres', area:'TI', empresa_t1:'T1.com', tipo:'Contrato de servicios', prioridad:'Alta', estado:'En proceso', flujo:'A', riesgos:2, confidencial:false, fecha:'04/04/2026', resumen_riesgo:'Clausula de propiedad intelectual desfavorable · Pago a 60 dias sin garantia' },
-  ]
+  useEffect(() => {
+    obtenerSolicitudes()
+      .then(data => { setSolicitudes(data || []); setCargando(false) })
+      .catch(() => setCargando(false))
+  }, [])
 
   const filtradas = solicitudes.filter(s => {
-    const matchFiltro = filtro==='todas' || (filtro==='flujoA' && s.flujo==='A') || (filtro==='flujoB' && s.flujo==='B') || (filtro==='riesgo' && s.riesgos>0) || (filtro==='confidencial' && s.confidencial)
-    const matchBusqueda = s.nombre.toLowerCase().includes(busqueda.toLowerCase()) || s.id.toLowerCase().includes(busqueda.toLowerCase()) || s.area.toLowerCase().includes(busqueda.toLowerCase())
+    const matchFiltro = filtro==='todas' || (filtro==='flujoA' && s.flujo==='A') || (filtro==='flujoB' && s.flujo==='B') || (filtro==='riesgo' && s.prioridad==='Alta') || (filtro==='confidencial' && s.confidencial)
+    const matchBusqueda = (s.nombre||'').toLowerCase().includes(busqueda.toLowerCase()) || (s.id||'').toLowerCase().includes(busqueda.toLowerCase()) || (s.area||'').toLowerCase().includes(busqueda.toLowerCase())
     return matchFiltro && matchBusqueda
   })
 
@@ -30,16 +32,16 @@ export default function Solicitudes() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'24px' }}>
         <div>
           <h1 style={{ color:'#0F2447', fontSize:'24px', fontWeight:700, margin:'0 0 4px' }}>Solicitudes</h1>
-          <p style={{ color:'#888', margin:0 }}>Todas las solicitudes recibidas</p>
+          <p style={{ color:'#888', margin:0 }}>Solicitudes reales de Supabase</p>
         </div>
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px', marginBottom:'24px' }}>
         {[
           { label:'Total', value:solicitudes.length, color:'#0F2447' },
-          { label:'Con riesgo detectado', value:solicitudes.filter(s=>s.riesgos>0).length, color:'#E8321A' },
           { label:'Flujo A — Socio', value:solicitudes.filter(s=>s.flujo==='A').length, color:'#F59E0B' },
           { label:'Flujo B — T1', value:solicitudes.filter(s=>s.flujo==='B').length, color:'#1D4ED8' },
+          { label:'Confidenciales', value:solicitudes.filter(s=>s.confidencial).length, color:'#E8321A' },
         ].map((k,i) => (
           <div key={i} style={{ background:'white', borderRadius:'12px', padding:'20px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)' }}>
             <p style={{ color:'#888', fontSize:'12px', margin:'0 0 8px' }}>{k.label}</p>
@@ -55,10 +57,9 @@ export default function Solicitudes() {
             style={{ flex:1, minWidth:'200px', padding:'10px 14px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'13px', outline:'none' }} />
           {[
             { id:'todas', label:'Todas' },
-            { id:'riesgo', label:'⚠️ Con riesgo' },
-            { id:'flujoA', label:'📄 Flujo A' },
-            { id:'flujoB', label:'⚖️ Flujo B' },
-            { id:'confidencial', label:'🔒 Confidencial' },
+            { id:'flujoA', label:'Flujo A' },
+            { id:'flujoB', label:'Flujo B' },
+            { id:'confidencial', label:'Confidencial' },
           ].map((f,i) => (
             <button key={i} onClick={() => setFiltro(f.id)}
               style={{ padding:'10px 16px', borderRadius:'8px', border:`1.5px solid ${filtro===f.id?'#E8321A':'#E8E8E8'}`, background:filtro===f.id?'#FFF5F5':'white', color:filtro===f.id?'#E8321A':'#888', fontWeight:filtro===f.id?700:400, fontSize:'13px', cursor:'pointer' }}>
@@ -67,45 +68,45 @@ export default function Solicitudes() {
           ))}
         </div>
 
-        <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-          {filtradas.map((s,i) => (
-            <div key={i} style={{ borderRadius:'12px', border:`1.5px solid ${s.riesgos>0?'#FCA5A5':'#F0F0F0'}`, padding:'16px 20px', background:s.riesgos>0?'#FFFAFA':'white', position:'relative', overflow:'hidden' }}>
-              {s.riesgos>0 && <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'4px', background:'#E8321A' }} />}
-              {s.flujo==='B' && s.riesgos===0 && <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'4px', background:'#1D4ED8' }} />}
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
-                  <span style={{ background:'#0F2447', color:'white', fontSize:'12px', fontWeight:700, padding:'3px 10px', borderRadius:'20px' }}>{s.id}</span>
-                  <span style={{ background:s.flujo==='A'?'#FEF3C7':'#EFF6FF', color:s.flujo==='A'?'#92400E':'#1D4ED8', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>
-                    {s.flujo==='A'?'📄 Socio comercial':'⚖️ Direccion Juridica T1'}
-                  </span>
-                  {s.confidencial && <span style={{ background:'#FFF5F5', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', border:'1px solid #FFD0CC' }}>🔒 Confidencial</span>}
-                  {s.riesgos>0 && <span style={{ background:'#FEE2E2', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>⚠️ {s.riesgos} riesgo{s.riesgos>1?'s':''} detectado{s.riesgos>1?'s':''}</span>}
-                  <span style={{ background:estadoColor[s.estado]?.bg, color:estadoColor[s.estado]?.color, fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.estado}</span>
+        {cargando ? (
+          <div style={{ textAlign:'center', padding:'48px', color:'#888' }}>Cargando solicitudes...</div>
+        ) : filtradas.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'48px', color:'#888' }}>No hay solicitudes</div>
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            {filtradas.map((s,i) => (
+              <div key={i} style={{ borderRadius:'12px', border:`1.5px solid ${s.prioridad==='Alta'?'#FCA5A5':'#F0F0F0'}`, padding:'16px 20px', background:s.prioridad==='Alta'?'#FFFAFA':'white', position:'relative', overflow:'hidden' }}>
+                {s.prioridad==='Alta' && <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'4px', background:'#E8321A' }} />}
+                {s.flujo==='B' && s.prioridad!=='Alta' && <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'4px', background:'#1D4ED8' }} />}
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
+                    <span style={{ background:'#0F2447', color:'white', fontSize:'12px', fontWeight:700, padding:'3px 10px', borderRadius:'20px' }}>{s.id}</span>
+                    <span style={{ background:s.flujo==='A'?'#FEF3C7':'#EFF6FF', color:s.flujo==='A'?'#92400E':'#1D4ED8', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>
+                      {s.flujo==='A'?'Socio comercial':'Direccion Juridica T1'}
+                    </span>
+                    {s.confidencial && <span style={{ background:'#FFF5F5', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', border:'1px solid #FFD0CC' }}>Confidencial</span>}
+                    <span style={{ background:estadoColor[s.estado]?.bg||'#F8F8F8', color:estadoColor[s.estado]?.color||'#888', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.estado}</span>
+                  </div>
+                  <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+                    <span style={{ background:(prioridadColor[s.prioridad]||'#888')+'20', color:prioridadColor[s.prioridad]||'#888', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.prioridad}</span>
+                    <span style={{ color:'#888', fontSize:'11px' }}>{new Date(s.created_at).toLocaleDateString('es-MX')}</span>
+                  </div>
                 </div>
-                <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
-                  <span style={{ background:prioridadColor[s.prioridad]+'20', color:prioridadColor[s.prioridad], fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.prioridad}</span>
-                  <span style={{ color:'#888', fontSize:'11px' }}>{s.fecha}</span>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                  <div>
+                    <p style={{ color:'#0F2447', fontWeight:700, fontSize:'14px', margin:'0 0 2px' }}>{s.nombre} — {s.area}</p>
+                    <p style={{ color:'#888', fontSize:'12px', margin:'0 0 4px' }}>{s.tipo_solicitud} · {s.empresa_t1}</p>
+                    {s.descripcion && <p style={{ color:'#555', fontSize:'11px', margin:0 }}>{s.descripcion.substring(0,80)}...</p>}
+                  </div>
+                  <div style={{ display:'flex', gap:'6px' }}>
+                    <button style={{ background:'#E8321A', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>Abrir en Editor</button>
+                    <button style={{ background:'#0F2447', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>Ver expediente</button>
+                  </div>
                 </div>
               </div>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                <div>
-                  <p style={{ color:'#0F2447', fontWeight:700, fontSize:'14px', margin:'0 0 2px' }}>{s.nombre} — {s.area}</p>
-                  <p style={{ color:'#888', fontSize:'12px', margin:'0 0 4px' }}>{s.tipo} · {s.empresa_t1}</p>
-                  {s.resumen_riesgo && (
-                    <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-                      <span style={{ color:'#E8321A', fontSize:'11px' }}>⚠️</span>
-                      <p style={{ color:'#C42A15', fontSize:'11px', margin:0, fontWeight:600 }}>{s.resumen_riesgo}</p>
-                    </div>
-                  )}
-                </div>
-                <div style={{ display:'flex', gap:'6px' }}>
-                  <button style={{ background:'#E8321A', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>Abrir en Editor</button>
-                  <button style={{ background:'#0F2447', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>Ver expediente</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
