@@ -2,6 +2,29 @@
 import { useState } from 'react'
 import { guardarSolicitud } from '@/lib/supabase/solicitudes'
 
+
+const Label = ({ text }: { text: string }) => (
+  <label style={{ display:'block', color:'#0F2447', fontSize:'13px', fontWeight:600, marginBottom:'6px' }}>{text}</label>
+)
+
+const InputField = ({ value, onChange, placeholder, type='text' }: { value:string, onChange:(v:string)=>void, placeholder:string, type?:string }) => (
+  <input type={type} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)}
+    style={{ width:'100%', padding:'12px 16px', borderRadius:'10px', border:'1.5px solid #E8E8E8', background:'white', color:'#0F2447', fontSize:'14px', boxSizing:'border-box' as any, outline:'none' }} />
+)
+
+const SelectField = ({ value, onChange, options }: { value:string, onChange:(v:string)=>void, options:string[] }) => (
+  <select value={value} onChange={e => onChange(e.target.value)}
+    style={{ width:'100%', padding:'12px 16px', borderRadius:'10px', border:'1.5px solid #E8E8E8', background:'white', color:'#0F2447', fontSize:'14px', boxSizing:'border-box' as any, outline:'none' }}>
+    <option value=''>Selecciona...</option>
+    {options.map((o,i) => <option key={i}>{o}</option>)}
+  </select>
+)
+
+const TextareaField = ({ value, onChange, placeholder }: { value:string, onChange:(v:string)=>void, placeholder:string }) => (
+  <textarea placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} rows={3}
+    style={{ width:'100%', padding:'12px 16px', borderRadius:'10px', border:'1.5px solid #E8E8E8', background:'white', color:'#0F2447', fontSize:'14px', boxSizing:'border-box' as any, resize:'vertical' as any, outline:'none' }} />
+)
+
 export default function Solicitar() {
   const [paso, setPaso] = useState(0)
   const [flujo, setFlujo] = useState<'A'|'B'|''>('')
@@ -17,7 +40,7 @@ export default function Solicitar() {
     tipo_firma: '', plataforma_firma: '',
     prioridad: 'Media', fecha_limite: '',
     tiene_contrato_previo: '', requiere_traduccion: '', idioma_traduccion: '',
-    condiciones_aplican: '',
+    condiciones_aplican: '', nacionalidad_otro: '', plataforma_firma_otro: '',
     confidencial: false,
   })
   const [archivos, setArchivos] = useState<File[]>([])
@@ -193,16 +216,16 @@ export default function Solicitar() {
             {paso===1 && (
               <div>
                 <h2 style={{ color:'#0F2447', fontSize:'20px', fontWeight:700, margin:'0 0 24px' }}>Datos del solicitante</h2>
-                <div style={{ marginBottom:'16px' }}><Label text="Nombre completo *" /><Input k="nombre" placeholder="Nombre y Apellido" /></div>
-                <div style={{ marginBottom:'16px' }}><Label text="Correo electronico *" /><Input k="correo" placeholder="correo@empresa.com" type="email" /></div>
+                <div style={{ marginBottom:'16px' }}><Label text="Nombre completo *" /><InputField value={form.nombre} onChange={v => set("nombre", v)} placeholder="Nombre y Apellido" /></div>
+                <div style={{ marginBottom:'16px' }}><Label text="Correo electronico *" /><InputField value={form.correo} onChange={v => set("correo", v)} placeholder="correo@empresa.com" type="email" /></div>
                 <div style={{ marginBottom:'16px' }}>
                   <Label text="Area *" />
-                  <Select k="area" options={areas} />
-                  {form.area==='Otro' && <div style={{ marginTop:'8px' }}><Input k="area_otro" placeholder="Describe tu area..." /></div>}
+                  <SelectField value={form.area} onChange={v => set("area", v)} options={areas} />
+                  {form.area==='Otro' && <div style={{ marginTop:'8px' }}><InputField value={form.area_otro} onChange={v => set("area_otro", v)} placeholder="Describe tu area..." /></div>}
                 </div>
                 <div style={{ marginBottom:'16px' }}>
                   <Label text="Empresa T1 *" />
-                  <Select k="empresa_t1" options={['T1.com','Claro Pagos']} />
+                  <SelectField value={form.empresa_t1} onChange={v => set("empresa_t1", v)} options={['T1.com','Claro Pagos']} />
                 </div>
                 {!esAccesoTotal && (
                   <div style={{ marginBottom:'16px' }}>
@@ -220,9 +243,9 @@ export default function Solicitar() {
                 {form.es_lider==='no' && !esAccesoTotal && (
                   <div style={{ marginBottom:'16px', background:'#F8F8F8', borderRadius:'10px', padding:'16px' }}>
                     <Label text="Nombre de tu lider *" />
-                    <div style={{ marginBottom:'10px' }}><Input k="lider_nombre" placeholder="Nombre del lider de area" /></div>
+                    <div style={{ marginBottom:'10px' }}><InputField value={form.lider_nombre} onChange={v => set("lider_nombre", v)} placeholder="Nombre del lider de area" /></div>
                     <Label text="Correo de tu lider *" />
-                    <Input k="lider_correo" placeholder="lider@empresa.com" type="email" />
+                    <InputField value={form.lider_correo} onChange={v => set("lider_correo", v)} placeholder="lider@empresa.com" type="email" />
                   </div>
                 )}
                 {form.area && (
@@ -242,17 +265,17 @@ export default function Solicitar() {
                 <h2 style={{ color:'#0F2447', fontSize:'20px', fontWeight:700, margin:'0 0 24px' }}>Tipo de documento</h2>
                 <div style={{ marginBottom:'16px' }}>
                   <Label text="Tipo de solicitud *" />
-                  <Select k="tipo_solicitud" options={tipos} />
-                  {form.tipo_solicitud==='Otro' && <div style={{ marginTop:'8px' }}><Input k="tipo_solicitud_otro" placeholder="Describe el documento que necesitas..." /></div>}
+                  <SelectField value={form.tipo_solicitud} onChange={v => set("tipo_solicitud", v)} options={tipos} />
+                  {form.tipo_solicitud==='Otro' && <div style={{ marginTop:'8px' }}><InputField value={form.tipo_solicitud_otro} onChange={v => set("tipo_solicitud_otro", v)} placeholder="Describe el documento que necesitas..." /></div>}
                 </div>
                 <div style={{ marginBottom:'16px' }}>
                   <Label text="Idioma del documento *" />
-                  <Select k="idioma" options={idiomas} />
-                  {form.idioma==='Otro' && <div style={{ marginTop:'8px' }}><Input k="idioma_otro" placeholder="Especifica el idioma..." /></div>}
+                  <SelectField value={form.idioma} onChange={v => set("idioma", v)} options={idiomas} />
+                  {form.idioma==='Otro' && <div style={{ marginTop:'8px' }}><InputField value={form.idioma_otro} onChange={v => set("idioma_otro", v)} placeholder="Especifica el idioma..." /></div>}
                 </div>
                 <div style={{ marginBottom:'16px' }}>
                   <Label text="Que necesitas del area legal *" />
-                  <Textarea k="descripcion" placeholder="Describe con detalle que necesitas. Mientras mas detalle mejor resultado." />
+                  <TextareaField value={form.descripcion} onChange={v => set("descripcion", v)} placeholder="Describe con detalle que necesitas. Mientras mas detalle mejor resultado." />
                 </div>
                 <div style={{ marginBottom:'16px' }}>
                   <Label text="Fecha limite deseada" />
@@ -279,7 +302,7 @@ export default function Solicitar() {
                       </div>
                     ))}
                   </div>
-                  {form.requiere_traduccion==='Si' && <Input k="idioma_traduccion" placeholder="¿A que idioma? Ej: Ingles, Frances..." />}
+                  {form.requiere_traduccion==='Si' && <InputField value={form.idioma_traduccion} onChange={v => set("idioma_traduccion", v)} placeholder="¿A que idioma? Ej: Ingles, Frances..." />}
                 </div>
                 {(form.es_lider==='si' || esAccesoTotal) && (
                   <div style={{ marginBottom:'16px', background:'#FFF5F5', borderRadius:'10px', padding:'16px', border:'1px solid #FFD0CC' }}>
@@ -302,13 +325,13 @@ export default function Solicitar() {
             {paso===3 && (
               <div>
                 <h2 style={{ color:'#0F2447', fontSize:'20px', fontWeight:700, margin:'0 0 24px' }}>Datos de la contraparte</h2>
-                <div style={{ marginBottom:'16px' }}><Label text="Nombre de la empresa *" /><Input k="nombre_empresa" placeholder="Razon social completa" /></div>
-                <div style={{ marginBottom:'16px' }}><Label text="RFC" /><Input k="rfc" placeholder="EMP123456ABC" /></div>
-                <div style={{ marginBottom:'16px' }}><Label text="Apoderado legal" /><Input k="apoderado" placeholder="Nombre del representante legal" /></div>
+                <div style={{ marginBottom:'16px' }}><Label text="Nombre de la empresa *" /><InputField value={form.nombre_empresa} onChange={v => set("nombre_empresa", v)} placeholder="Razon social completa" /></div>
+                <div style={{ marginBottom:'16px' }}><Label text="RFC" /><InputField value={form.rfc} onChange={v => set("rfc", v)} placeholder="EMP123456ABC" /></div>
+                <div style={{ marginBottom:'16px' }}><Label text="Apoderado legal" /><InputField value={form.apoderado} onChange={v => set("apoderado", v)} placeholder="Nombre del representante legal" /></div>
                 <div style={{ marginBottom:'24px' }}>
                   <Label text="Nacionalidad *" />
-                  <Select k="nacionalidad" options={['Mexicana','Estadounidense','Colombiana','Española','Otra']} />
-  {form.nacionalidad==='Otra' && <div style={{ marginTop:'8px' }}><Input k="nacionalidad_otro" placeholder="Indica la nacionalidad..." /></div>}
+                  <SelectField value={form.nacionalidad} onChange={v => set("nacionalidad", v)} options={['Mexicana','Estadounidense','Colombiana','Española','Otra']} />
+  {form.nacionalidad==='Otra' && <div style={{ marginTop:'8px' }}><InputField value={form.nacionalidad_otro} onChange={v => set("nacionalidad_otro", v)} placeholder="Indica la nacionalidad..." /></div>}
                 </div>
                 {form.nacionalidad && form.nacionalidad!=='Mexicana' && (
                   <div style={{ background:'#EFF6FF', border:'1px solid #BFDBFE', borderRadius:'10px', padding:'12px 16px', marginBottom:'16px' }}>
@@ -354,27 +377,27 @@ export default function Solicitar() {
 
                 {form.condiciones_aplican==='si' && (
                   <div>
-                    <div style={{ marginBottom:'16px' }}><Label text="Vigencia" /><Input k="vigencia" placeholder="Ej: 12 meses, 1 año, indefinida" /></div>
+                    <div style={{ marginBottom:'16px' }}><Label text="Vigencia" /><InputField value={form.vigencia} onChange={v => set("vigencia", v)} placeholder="Ej: 12 meses, 1 año, indefinida" /></div>
                     <div style={{ marginBottom:'16px' }}>
                       <Label text="Contraprestacion" />
-                      <Input k="contraprestacion" placeholder="Ej: $500,000 MXN mensuales, tarifa por evento..." />
+                      <InputField value={form.contraprestacion} onChange={v => set("contraprestacion", v)} placeholder="Ej: $500,000 MXN mensuales, tarifa por evento..." />
                       <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'8px' }}>
                         <input type="checkbox" id="tarifas" checked={form.adjunta_tarifas} onChange={e => set('adjunta_tarifas', e.target.checked)} style={{ width:'16px', height:'16px', cursor:'pointer' }} />
                         <label htmlFor="tarifas" style={{ color:'#0F2447', fontSize:'12px', fontWeight:600, cursor:'pointer' }}>Se adjunta Excel o tarifas en documentos</label>
                       </div>
                     </div>
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
-                      <div><Label text="Plazo de pago" /><Input k="plazo_pago" placeholder="Ej: 30" /></div>
-                      <div><Label text="Tipo de dias" /><Select k="tipo_dias_pago" options={['naturales','habiles']} /></div>
+                      <div><Label text="Plazo de pago" /><InputField value={form.plazo_pago} onChange={v => set("plazo_pago", v)} placeholder="Ej: 30" /></div>
+                      <div><Label text="Tipo de dias" /><SelectField value={form.tipo_dias_pago} onChange={v => set("tipo_dias_pago", v)} options={['naturales','habiles']} /></div>
                     </div>
                     <div style={{ marginBottom:'16px' }}>
                       <Label text="Tipo de firma" />
-                      <Select k="tipo_firma" options={firmas} />
+                      <SelectField value={form.tipo_firma} onChange={v => set("tipo_firma", v)} options={firmas} />
                       {form.tipo_firma==='Electronica' && (
     <div style={{ marginTop:'8px' }}>
       <Label text="Plataforma de firma electronica" />
-      <Select k="plataforma_firma" options={['SORA','Otra']} />
-      {form.plataforma_firma==='Otra' && <div style={{ marginTop:'8px' }}><Input k="plataforma_firma_otro" placeholder="Indica cual plataforma..." /></div>}
+      <SelectField value={form.plataforma_firma} onChange={v => set("plataforma_firma", v)} options={['SORA','Otra']} />
+      {form.plataforma_firma==='Otra' && <div style={{ marginTop:'8px' }}><InputField value={form.plataforma_firma_otro} onChange={v => set("plataforma_firma_otro", v)} placeholder="Indica cual plataforma..." /></div>}
     </div>
   )}
                     </div>
@@ -383,7 +406,7 @@ export default function Solicitar() {
 
                 <div style={{ marginBottom:'16px' }}>
                   <Label text={form.condiciones_aplican==='no'?'¿Alguna condicion especial? (opcional)':'Condiciones especiales adicionales (opcional)'} />
-                  <Textarea k="condiciones_especiales" placeholder="Describe cualquier condicion especial, restriccion o requerimiento particular..." />
+                  <TextareaField value={form.condiciones_especiales} onChange={v => set("condiciones_especiales", v)} placeholder="Describe cualquier condicion especial, restriccion o requerimiento particular..." />
                 </div>
 
                 <div style={{ display:'flex', justifyContent:'space-between', marginTop:'8px' }}>
