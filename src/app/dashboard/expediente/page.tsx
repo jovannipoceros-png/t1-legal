@@ -76,7 +76,7 @@ export default function Expediente() {
 
   const pasos = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
   const pasoActual = expediente ? Math.max(0, pasos.indexOf(expediente.estado)) : 0
-  const carpetas = ['01 Solicitud','02 Documentos','03 Analisis Legal','04 Negociacion','05 Firma']
+  const carpetas = ['Solicitud','Documentos','Analisis Legal','Negociacion','Firma']
 
   return (
     <div style={{ padding:'32px', fontFamily:'sans-serif' }}>
@@ -207,10 +207,10 @@ export default function Expediente() {
                     style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 10px', borderRadius:'7px', border:'1px solid #F0F0F0', marginBottom:'4px', cursor:'pointer', background:carpetaAbierta===carpeta?'#FFF5F5':'#FAFAFA' }}>
                     <span style={{ fontSize:'14px' }}>{carpetaAbierta===carpeta?'📂':'📁'}</span>
                     <span style={{ color:'#0F2447', fontSize:'12px', fontWeight:500, flex:1 }}>{carpeta}</span>
-                    {carpeta==='02 Documentos' && documentos.length>0 && (
+                    {carpeta==='Documentos' && documentos.length>0 && (
                       <span style={{ background:'#E8321A', color:'white', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>{documentos.length}</span>
                     )}
-                    {carpeta==='05 Firma' && expediente.estado==='Cerrado' && (
+                    {carpeta==='Firma' && expediente.estado==='Cerrado' && (
                       <span style={{ background:'#F0FDF4', color:'#166534', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>Cerrado</span>
                     )}
                   </div>

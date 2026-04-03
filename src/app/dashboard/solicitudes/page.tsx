@@ -49,7 +49,7 @@ export default function Solicitudes() {
     return matchFiltro && matchBusqueda
   })
 
-  const estados = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
+  const estados = ['Pendiente','En revision','En negociacion','Lista para firma']
   const estadoColor: Record<string,{bg:string,color:string}> = {
     'Pendiente': { bg:'#FEF3C7', color:'#92400E' },
     'En revision': { bg:'#EFF6FF', color:'#1D4ED8' },
