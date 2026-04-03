@@ -1,14 +1,16 @@
 'use client'
 import { useState } from 'react'
-import { obtenerSolicitudesPorCorreo } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudesPorCorreo, obtenerTracking } from '@/lib/supabase/solicitudes'
 
-const pasos = ['Recibida','En revision','En negociacion','Lista para firma','Cerrada']
+const pasosTracking = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
 
 export default function Portal() {
   const [solicitudes, setSolicitudes] = useState<any[]>([])
+  const [trackings, setTrackings] = useState<Record<string,any[]>>({})
   const [correo, setCorreo] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [buscado, setBuscado] = useState(false)
+  const [expandido, setExpandido] = useState<string|null>(null)
 
   const buscar = async () => {
     if (!correo) return
@@ -17,6 +19,12 @@ export default function Portal() {
       const data = await obtenerSolicitudesPorCorreo(correo)
       setSolicitudes(data || [])
       setBuscado(true)
+      const trackingData: Record<string,any[]> = {}
+      for (const s of (data || [])) {
+        const t = await obtenerTracking(s.id)
+        trackingData[s.id] = t || []
+      }
+      setTrackings(trackingData)
     } catch(e) {
       setSolicitudes([])
       setBuscado(true)
@@ -24,6 +32,8 @@ export default function Portal() {
       setBuscando(false)
     }
   }
+
+  const pasoActual = (estado: string) => pasosTracking.indexOf(estado)
 
   return (
     <div style={{ minHeight:'100vh', background:'#F8F8F8', fontFamily:'sans-serif' }}>
@@ -59,9 +69,9 @@ export default function Portal() {
           <div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'16px', marginBottom:'24px' }}>
               {[
-                { label:'Total solicitudes', value:solicitudes.length, color:'#0F2447' },
-                { label:'En proceso', value:solicitudes.filter(s => s.estado==='En proceso').length, color:'#1D4ED8' },
-                { label:'Pendientes', value:solicitudes.filter(s => s.estado==='Pendiente').length, color:'#F59E0B' },
+                { label:'Total', value:solicitudes.length, color:'#0F2447' },
+                { label:'En proceso', value:solicitudes.filter(s => s.estado!=='Pendiente'&&s.estado!=='Cerrado').length, color:'#1D4ED8' },
+                { label:'Cerradas', value:solicitudes.filter(s => s.estado==='Cerrado').length, color:'#0D5C36' },
               ].map((k,i) => (
                 <div key={i} style={{ background:'white', borderRadius:'12px', padding:'20px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
                   <p style={{ color:'#888', fontSize:'13px', margin:'0 0 8px' }}>{k.label}</p>
@@ -71,7 +81,7 @@ export default function Portal() {
             </div>
 
             {solicitudes.length === 0 ? (
-              <div style={{ background:'white', borderRadius:'12px', padding:'48px', textAlign:'center', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
+              <div style={{ background:'white', borderRadius:'12px', padding:'48px', textAlign:'center', border:'1px solid #F0F0F0' }}>
                 <p style={{ color:'#888', fontSize:'14px', margin:'0 0 12px' }}>No hay solicitudes para este correo</p>
                 <a href="/solicitar" style={{ color:'#E8321A', fontWeight:700, textDecoration:'none' }}>Hacer una solicitud →</a>
               </div>
@@ -84,25 +94,49 @@ export default function Portal() {
                   </span>
                   {s.confidencial && <span style={{ background:'#FFF5F5', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', border:'1px solid #FFD0CC' }}>Confidencial</span>}
                   <span style={{ background:'#FEF3C7', color:'#92400E', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.estado}</span>
-                  <span style={{ background:s.prioridad==='Alta'?'#FEE2E2':s.prioridad==='Media'?'#FEF3C7':'#F0FDF4', color:s.prioridad==='Alta'?'#C42A15':s.prioridad==='Media'?'#92400E':'#166534', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.prioridad}</span>
                 </div>
-                <h3 style={{ color:'#0F2447', fontSize:'16px', fontWeight:700, margin:'0 0 4px' }}>{s.tipo_solicitud}</h3>
-                <p style={{ color:'#888', fontSize:'13px', margin:'0 0 20px' }}>{s.empresa_t1} — Enviada el {new Date(s.created_at).toLocaleDateString('es-MX')}</p>
-                <p style={{ color:'#0F2447', fontSize:'13px', fontWeight:600, marginBottom:'16px' }}>Seguimiento:</p>
-                <div style={{ position:'relative', padding:'8px 0 32px' }}>
+
+                <h3 style={{ color:'#0F2447', fontSize:'16px', fontWeight:700, margin:'0 0 4px' }}>{s.tipo_solicitud||'Sin tipo'}</h3>
+                <p style={{ color:'#888', fontSize:'13px', margin:'0 0 16px' }}>{s.empresa_t1} — Enviada el {new Date(s.created_at).toLocaleDateString('es-MX')}</p>
+
+                <div style={{ position:'relative', padding:'8px 0 24px', marginBottom:'16px' }}>
                   <div style={{ position:'absolute', top:'20px', left:'5%', right:'5%', height:'3px', background:'#F0F0F0' }} />
-                  <div style={{ position:'absolute', top:'20px', left:'5%', width:'0%', height:'3px', background:'#E8321A' }} />
+                  <div style={{ position:'absolute', top:'20px', left:'5%', width:`${Math.max(0, pasoActual(s.estado)/(pasosTracking.length-1))*90}%`, height:'3px', background:'#E8321A' }} />
                   <div style={{ display:'flex', justifyContent:'space-between', position:'relative' }}>
-                    {pasos.map((p,j) => (
+                    {pasosTracking.map((p,j) => (
                       <div key={j} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', width:'20%' }}>
-                        <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:j===0?'#E8321A':'white', border:`2px solid ${j===0?'#E8321A':'#E0E2E6'}`, display:'flex', alignItems:'center', justifyContent:'center', zIndex:1 }}>
-                          {j===0 && <span style={{ width:'10px', height:'10px', background:'white', borderRadius:'50%', display:'block' }} />}
+                        <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:j<=pasoActual(s.estado)?'#E8321A':'white', border:`2px solid ${j<=pasoActual(s.estado)?'#E8321A':'#E0E2E6'}`, display:'flex', alignItems:'center', justifyContent:'center', zIndex:1 }}>
+                          {j<pasoActual(s.estado) && <span style={{ color:'white', fontSize:'12px', fontWeight:700 }}>✓</span>}
+                          {j===pasoActual(s.estado) && <span style={{ width:'8px', height:'8px', background:'white', borderRadius:'50%', display:'block' }} />}
                         </div>
-                        <span style={{ fontSize:'11px', color:j===0?'#0F2447':'#888', fontWeight:j===0?700:400, textAlign:'center' }}>{p}</span>
+                        <span style={{ fontSize:'10px', color:j<=pasoActual(s.estado)?'#0F2447':'#888', fontWeight:j===pasoActual(s.estado)?700:400, textAlign:'center' }}>{p}</span>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                <button onClick={() => setExpandido(expandido===s.id?null:s.id)}
+                  style={{ background:'#F8F8F8', color:'#0F2447', border:'1px solid #F0F0F0', padding:'8px 16px', borderRadius:'7px', fontSize:'12px', fontWeight:600, cursor:'pointer', width:'100%' }}>
+                  {expandido===s.id ? 'Ocultar historial ▲' : 'Ver historial completo ▼'}
+                </button>
+
+                {expandido===s.id && (
+                  <div style={{ marginTop:'16px', paddingLeft:'16px', borderLeft:'2px solid #F0F0F0' }}>
+                    <div style={{ padding:'10px 0', borderBottom:'1px solid #F8F8F8' }}>
+                      <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:600, margin:'0 0 2px' }}>Solicitud recibida</p>
+                      <p style={{ color:'#aaa', fontSize:'11px', margin:0 }}>{new Date(s.created_at).toLocaleString('es-MX')} — Sistema</p>
+                    </div>
+                    {(trackings[s.id]||[]).map((t,j) => (
+                      <div key={j} style={{ padding:'10px 0', borderBottom:'1px solid #F8F8F8' }}>
+                        <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:600, margin:'0 0 2px' }}>{t.nota}</p>
+                        <p style={{ color:'#aaa', fontSize:'11px', margin:0 }}>{new Date(t.created_at).toLocaleString('es-MX')} — {t.autor}</p>
+                      </div>
+                    ))}
+                    {(trackings[s.id]||[]).length === 0 && (
+                      <p style={{ color:'#888', fontSize:'12px', margin:'10px 0' }}>Sin actualizaciones adicionales aun</p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
