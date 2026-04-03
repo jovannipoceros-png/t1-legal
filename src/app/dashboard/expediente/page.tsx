@@ -361,7 +361,7 @@ export default function Expediente() {
                             </button>
                           </div>
                           <button onClick={guardarConfigFirma} disabled={guardandoFirma}
-                            style={{ width:'100%', padding:'8px', background:'#E8321A', color:'white', border:'none', borderRadius:'7px', fontSize:'12px', fontWeight:700, cursor:'pointer' }} onClick={guardarConfigFirma}>
+                            style={{ width:'100%', padding:'8px', background:'#E8321A', color:'white', border:'none', borderRadius:'7px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>
                             {guardandoFirma ? 'Guardando...' : 'Iniciar proceso de firma'}
                           </button>
                         </div>
