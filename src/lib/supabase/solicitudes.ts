@@ -72,3 +72,10 @@ export async function obtenerSolicitudesPorCorreo(correo: string) {
   if (error) throw error
   return data
 }
+
+export async function actualizarEstado(id: string, estado: string) {
+  const supabase = createClient()
+  const { error } = await supabase.from('solicitudes').update({ estado }).eq('id', id)
+  if (error) throw error
+  return true
+}
