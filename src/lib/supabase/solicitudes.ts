@@ -73,9 +73,29 @@ export async function obtenerSolicitudesPorCorreo(correo: string) {
   return data
 }
 
-export async function actualizarEstado(id: string, estado: string) {
+export async function actualizarEstado(id: string, estado: string, nota?: string) {
   const supabase = createClient()
   const { error } = await supabase.from('solicitudes').update({ estado }).eq('id', id)
   if (error) throw error
+  await agregarTracking(id, estado, nota)
   return true
+}
+
+export async function agregarTracking(solicitud_id: string, estado: string, nota?: string) {
+  const supabase = createClient()
+  const { error } = await supabase.from('tracking').insert([{
+    solicitud_id,
+    estado,
+    nota: nota || `Estado actualizado a: ${estado}`,
+    autor: 'Jovanni Poceros',
+  }])
+  if (error) throw error
+  return true
+}
+
+export async function obtenerTracking(solicitud_id: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase.from('tracking').select('*').eq('solicitud_id', solicitud_id).order('created_at', { ascending: true })
+  if (error) throw error
+  return data
 }
