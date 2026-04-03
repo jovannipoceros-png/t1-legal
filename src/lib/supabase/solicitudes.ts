@@ -139,3 +139,16 @@ export async function obtenerUrlDocumento(solicitudId: string, nombreArchivo: st
     .createSignedUrl(`${solicitudId}/${nombreArchivo}`, 3600)
   return data?.signedUrl || ''
 }
+
+export async function cerrarExpediente(id: string, archivoFirmado: string) {
+  const supabase = createClient()
+  const { error } = await supabase.from('solicitudes').update({
+    estado: 'Cerrado',
+    fecha_cierre: new Date().toISOString(),
+    archivo_firmado: archivoFirmado,
+  }).eq('id', id)
+  if (error) throw error
+  await agregarTracking(id, 'Cerrado', 'Contrato firmado cargado — Expediente cerrado')
+  return true
+}
+

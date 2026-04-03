@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
   const [busqueda, setBusqueda] = useState('')
@@ -12,6 +12,7 @@ export default function Expediente() {
   const [carpetaAbierta, setCarpetaAbierta] = useState<string|null>(null)
   const [vistaPrevia, setVistaPrevia] = useState<string|null>(null)
   const [vistaNombre, setVistaNombre] = useState('')
+  const [cerrandoExp, setCerrandoExp] = useState(false)
 
   const buscar = async () => {
     if (!busqueda.trim()) return
@@ -50,9 +51,32 @@ export default function Expediente() {
     if (url) window.open(url, '_blank')
   }
 
+  const handleCargarFirmado = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.target.files?.[0]
+    if (!archivo) return
+    try {
+      await subirDocumento(expediente.id, archivo)
+      const confirmar = window.confirm('Contrato firmado cargado. Deseas cerrar el expediente ahora?')
+      if (confirmar) {
+        setCerrandoExp(true)
+        await cerrarExpediente(expediente.id, archivo.name)
+        setExpediente((prev: any) => ({...prev, estado:'Cerrado', fecha_cierre:new Date().toISOString()}))
+        const t = await obtenerTracking(expediente.id)
+        setTracking(t||[])
+        const docs = await obtenerDocumentos(expediente.id)
+        setDocumentos(docs||[])
+        setCerrandoExp(false)
+        alert('Expediente cerrado exitosamente')
+      }
+    } catch(err) {
+      alert('Error al cargar el archivo')
+      setCerrandoExp(false)
+    }
+  }
+
   const pasos = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
   const pasoActual = expediente ? Math.max(0, pasos.indexOf(expediente.estado)) : 0
-  const carpetas = ['01 Solicitud','02 Documentos','03 Analisis Legal','04 Negociacion','05 Firma — Cargar contrato firmado']
+  const carpetas = ['01 Solicitud','02 Documentos','03 Analisis Legal','04 Negociacion','05 Firma']
 
   return (
     <div style={{ padding:'32px', fontFamily:'sans-serif' }}>
@@ -65,7 +89,7 @@ export default function Expediente() {
             </div>
             <div style={{ display:'flex', gap:'8px' }}>
               <button onClick={() => window.open(vistaPrevia, '_blank')} style={{ background:'#0F2447', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>Descargar</button>
-              <button onClick={() => setVistaPrevia(null)} style={{ background:'#E8321A', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>Cerrar ✕</button>
+              <button onClick={() => setVistaPrevia(null)} style={{ background:'#E8321A', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>Cerrar X</button>
             </div>
           </div>
           <iframe src={vistaPrevia} style={{ flex:1, border:'none', width:'100%' }} />
@@ -112,6 +136,7 @@ export default function Expediente() {
                       {expediente.flujo==='A'?'Documento del socio':'Documento T1'}
                     </span>
                     {expediente.confidencial && <span style={{ background:'#FFF5F5', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', border:'1px solid #FFD0CC' }}>Confidencial</span>}
+                    <span style={{ background:expediente.estado==='Cerrado'?'#F0FDF4':'#FEF3C7', color:expediente.estado==='Cerrado'?'#166534':'#92400E', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{expediente.estado}</span>
                   </div>
                   <h2 style={{ color:'#0F2447', fontSize:'18px', fontWeight:700, margin:'0 0 4px' }}>{expediente.nombre_empresa||'Sin contraparte'}</h2>
                   <p style={{ color:'#888', fontSize:'13px', margin:0 }}>{expediente.tipo_solicitud} — {expediente.empresa_t1}</p>
@@ -185,6 +210,9 @@ export default function Expediente() {
                     {carpeta==='02 Documentos' && documentos.length>0 && (
                       <span style={{ background:'#E8321A', color:'white', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>{documentos.length}</span>
                     )}
+                    {carpeta==='05 Firma' && expediente.estado==='Cerrado' && (
+                      <span style={{ background:'#F0FDF4', color:'#166534', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>Cerrado</span>
+                    )}
                   </div>
                   {carpetaAbierta===carpeta && carpeta==='02 Documentos' && (
                     <div style={{ paddingLeft:'16px', marginBottom:'4px' }}>
@@ -198,6 +226,24 @@ export default function Expediente() {
                           <button onClick={() => descargarDocumento(doc)} style={{ background:'#E8321A', color:'white', border:'none', padding:'4px 8px', borderRadius:'5px', fontSize:'10px', fontWeight:700, cursor:'pointer' }}>⬇</button>
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {carpetaAbierta===carpeta && carpeta==='05 Firma' && (
+                    <div style={{ paddingLeft:'16px', marginBottom:'4px' }}>
+                      {expediente.estado==='Cerrado' ? (
+                        <div style={{ padding:'12px', background:'#F0FDF4', borderRadius:'8px', border:'1px solid #BBF7D0', margin:'4px 0' }}>
+                          <p style={{ color:'#166534', fontSize:'12px', fontWeight:700, margin:'0 0 2px' }}>Expediente cerrado</p>
+                          <p style={{ color:'#166534', fontSize:'11px', margin:0 }}>Cerrado el {expediente.fecha_cierre ? new Date(expediente.fecha_cierre).toLocaleDateString('es-MX') : 'N/A'}</p>
+                        </div>
+                      ) : (
+                        <div style={{ padding:'12px', background:'#F8F8F8', borderRadius:'8px', border:'1px solid #F0F0F0', margin:'4px 0' }}>
+                          <p style={{ color:'#888', fontSize:'11px', margin:'0 0 8px' }}>Carga el contrato firmado para cerrar el expediente</p>
+                          <label style={{ display:'block', background:'#0F2447', color:'white', padding:'8px 12px', borderRadius:'7px', fontSize:'11px', fontWeight:700, cursor:'pointer', textAlign:'center' }}>
+                            {cerrandoExp ? 'Cerrando...' : 'Cargar contrato firmado'}
+                            <input type="file" accept=".pdf,.docx,.doc" style={{ display:'none' }} onChange={handleCargarFirmado} />
+                          </label>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
