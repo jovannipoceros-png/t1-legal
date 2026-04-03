@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
   const [busqueda, setBusqueda] = useState('')
@@ -13,6 +13,13 @@ export default function Expediente() {
   const [vistaPrevia, setVistaPrevia] = useState<string|null>(null)
   const [vistaNombre, setVistaNombre] = useState('')
   const [cerrandoExp, setCerrandoExp] = useState(false)
+  const [firma, setFirma] = useState<any>(null)
+  const [configurandoFirma, setConfigurandoFirma] = useState(false)
+  const [tipoFirma, setTipoFirma] = useState('Fisica')
+  const [plataforma, setPlataforma] = useState('SORA')
+  const [firmantes, setFirmantes] = useState<any[]>([])
+  const [nuevoFirmante, setNuevoFirmante] = useState({ nombre:'', rol:'', empresa:'' })
+  const [guardandoFirma, setGuardandoFirma] = useState(false)
 
   const buscar = async () => {
     if (!busqueda.trim()) return
@@ -35,10 +42,20 @@ export default function Expediente() {
     setExpediente(s)
     setResultados([])
     setCarpetaAbierta(null)
+    setFirma(null)
     const t = await obtenerTracking(s.id)
     setTracking(t||[])
     const docs = await obtenerDocumentos(s.id)
     setDocumentos(docs||[])
+  }
+
+  const abrirCarpeta = async (carpeta: string) => {
+    setCarpetaAbierta(carpetaAbierta===carpeta?null:carpeta)
+    if (carpeta==='Firma' && carpetaAbierta!=='Firma') {
+      const f = await obtenerFirma(expediente.id)
+      setFirma(f)
+      setConfigurandoFirma(!f)
+    }
   }
 
   const verDocumento = async (doc: any) => {
@@ -49,6 +66,41 @@ export default function Expediente() {
   const descargarDocumento = async (doc: any) => {
     const url = await obtenerUrlDocumento(expediente.id, doc.name)
     if (url) window.open(url, '_blank')
+  }
+
+  const agregarFirmante = () => {
+    if (!nuevoFirmante.nombre) return
+    setFirmantes(prev => [...prev, { ...nuevoFirmante, estado:'pendiente', fecha:null }])
+    setNuevoFirmante({ nombre:'', rol:'', empresa:'' })
+  }
+
+  const eliminarFirmante = (i: number) => {
+    setFirmantes(prev => prev.filter((_,j) => j!==i))
+  }
+
+  const guardarConfigFirma = async () => {
+    if (firmantes.length===0) { alert('Agrega al menos un firmante'); return }
+    setGuardandoFirma(true)
+    try {
+      await crearFirma(expediente.id, tipoFirma, plataforma, firmantes)
+      const f = await obtenerFirma(expediente.id)
+      setFirma(f)
+      setConfigurandoFirma(false)
+    } finally {
+      setGuardandoFirma(false)
+    }
+  }
+
+  const marcarFirmado = async (idx: number) => {
+    if (!firma) return
+    const nuevos = [...firma.firmantes]
+    nuevos[idx] = { ...nuevos[idx], estado:'firmado', fecha:new Date().toLocaleString('es-MX') }
+    await actualizarFirmantes(expediente.id, nuevos)
+    setFirma((prev: any) => ({ ...prev, firmantes:nuevos }))
+    const todosfirmaron = nuevos.every((f: any) => f.estado==='firmado')
+    if (todosirmaron) {
+      alert('Todos han firmado. Carga el contrato firmado para cerrar el expediente.')
+    }
   }
 
   const handleCargarFirmado = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,6 +130,8 @@ export default function Expediente() {
   const pasoActual = expediente ? Math.max(0, pasos.indexOf(expediente.estado)) : 0
   const carpetas = ['Solicitud','Documentos','Analisis Legal','Negociacion','Firma']
 
+  const todosirmaron = firma?.firmantes?.every((f: any) => f.estado==='firmado')
+
   return (
     <div style={{ padding:'32px', fontFamily:'sans-serif' }}>
       {vistaPrevia && (
@@ -101,7 +155,7 @@ export default function Expediente() {
 
       <div style={{ display:'flex', gap:'10px', marginBottom:'24px' }}>
         <input value={busqueda} onChange={e => setBusqueda(e.target.value)} onKeyDown={e => e.key==='Enter' && buscar()}
-          placeholder="Buscar por ID (C-2026-001), empresa o nombre..."
+          placeholder="Buscar por ID, empresa o nombre..."
           style={{ flex:1, padding:'12px 16px', borderRadius:'10px', border:'1.5px solid #E8E8E8', fontSize:'14px', outline:'none', color:'#0F2447' }} />
         <button onClick={buscar} disabled={buscando}
           style={{ background:'#E8321A', color:'white', border:'none', padding:'12px 24px', borderRadius:'10px', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>
@@ -117,7 +171,7 @@ export default function Expediente() {
               style={{ display:'flex', alignItems:'center', gap:'12px', padding:'10px', borderRadius:'8px', cursor:'pointer', border:'1px solid #F0F0F0', marginBottom:'6px', background:'#FAFAFA' }}>
               <span style={{ background:'#0F2447', color:'white', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.id}</span>
               <span style={{ color:'#0F2447', fontSize:'13px', fontWeight:600 }}>{s.nombre_empresa||s.nombre||'Sin nombre'}</span>
-              <span style={{ color:'#888', fontSize:'12px' }}>{s.tipo_solicitud} · {s.empresa_t1}</span>
+              <span style={{ color:'#888', fontSize:'12px' }}>{s.tipo_solicitud}</span>
               <span style={{ background:'#FEF3C7', color:'#92400E', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', marginLeft:'auto' }}>{s.estado}</span>
             </div>
           ))}
@@ -203,7 +257,7 @@ export default function Expediente() {
               <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 14px' }}>Carpetas del expediente</h3>
               {carpetas.map((carpeta,i) => (
                 <div key={i}>
-                  <div onClick={() => setCarpetaAbierta(carpetaAbierta===carpeta?null:carpeta)}
+                  <div onClick={() => abrirCarpeta(carpeta)}
                     style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 10px', borderRadius:'7px', border:'1px solid #F0F0F0', marginBottom:'4px', cursor:'pointer', background:carpetaAbierta===carpeta?'#FFF5F5':'#FAFAFA' }}>
                     <span style={{ fontSize:'14px' }}>{carpetaAbierta===carpeta?'📂':'📁'}</span>
                     <span style={{ color:'#0F2447', fontSize:'12px', fontWeight:500, flex:1 }}>{carpeta}</span>
@@ -213,8 +267,14 @@ export default function Expediente() {
                     {carpeta==='Firma' && expediente.estado==='Cerrado' && (
                       <span style={{ background:'#F0FDF4', color:'#166534', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>Cerrado</span>
                     )}
+                    {carpeta==='Firma' && firma && expediente.estado!=='Cerrado' && (
+                      <span style={{ background:todosirmaron?'#F0FDF4':'#FEF3C7', color:todosirmaron?'#166534':'#92400E', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>
+                        {firma.firmantes.filter((f:any)=>f.estado==='firmado').length}/{firma.firmantes.length}
+                      </span>
+                    )}
                   </div>
-                  {carpetaAbierta===carpeta && carpeta==='02 Documentos' && (
+
+                  {carpetaAbierta===carpeta && carpeta==='Documentos' && (
                     <div style={{ paddingLeft:'16px', marginBottom:'4px' }}>
                       {documentos.length===0 ? (
                         <p style={{ color:'#888', fontSize:'11px', margin:'4px 0 8px' }}>Sin documentos</p>
@@ -228,22 +288,111 @@ export default function Expediente() {
                       ))}
                     </div>
                   )}
-                  {carpetaAbierta===carpeta && carpeta==='05 Firma' && (
+
+                  {carpetaAbierta===carpeta && carpeta==='Firma' && (
                     <div style={{ paddingLeft:'16px', marginBottom:'4px' }}>
                       {expediente.estado==='Cerrado' ? (
                         <div style={{ padding:'12px', background:'#F0FDF4', borderRadius:'8px', border:'1px solid #BBF7D0', margin:'4px 0' }}>
-                          <p style={{ color:'#166534', fontSize:'12px', fontWeight:700, margin:'0 0 2px' }}>Expediente cerrado</p>
+                          <p style={{ color:'#166534', fontSize:'12px', fontWeight:700, margin:'0 0 2px' }}>✓ Expediente cerrado</p>
                           <p style={{ color:'#166534', fontSize:'11px', margin:0 }}>Cerrado el {expediente.fecha_cierre ? new Date(expediente.fecha_cierre).toLocaleDateString('es-MX') : 'N/A'}</p>
                         </div>
-                      ) : (
+                      ) : configurandoFirma ? (
                         <div style={{ padding:'12px', background:'#F8F8F8', borderRadius:'8px', border:'1px solid #F0F0F0', margin:'4px 0' }}>
-                          <p style={{ color:'#888', fontSize:'11px', margin:'0 0 8px' }}>Carga el contrato firmado para cerrar el expediente</p>
-                          <label style={{ display:'block', background:'#0F2447', color:'white', padding:'8px 12px', borderRadius:'7px', fontSize:'11px', fontWeight:700, cursor:'pointer', textAlign:'center' }}>
-                            {cerrandoExp ? 'Cerrando...' : 'Cargar contrato firmado'}
-                            <input type="file" accept=".pdf,.docx,.doc" style={{ display:'none' }} onChange={handleCargarFirmado} />
-                          </label>
+                          <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:700, margin:'0 0 12px' }}>Configurar proceso de firma</p>
+                          <div style={{ marginBottom:'10px' }}>
+                            <p style={{ color:'#0F2447', fontSize:'11px', fontWeight:600, margin:'0 0 6px' }}>Tipo de firma</p>
+                            <div style={{ display:'flex', gap:'6px' }}>
+                              {['Fisica','Electronica'].map(t => (
+                                <button key={t} onClick={() => setTipoFirma(t)}
+                                  style={{ flex:1, padding:'7px', borderRadius:'6px', border:`1.5px solid ${tipoFirma===t?'#E8321A':'#E8E8E8'}`, background:tipoFirma===t?'#FFF5F5':'white', color:tipoFirma===t?'#E8321A':'#888', fontWeight:tipoFirma===t?700:400, fontSize:'11px', cursor:'pointer' }}>
+                                  {t}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {tipoFirma==='Electronica' && (
+                            <div style={{ marginBottom:'10px' }}>
+                              <p style={{ color:'#0F2447', fontSize:'11px', fontWeight:600, margin:'0 0 6px' }}>Plataforma</p>
+                              <div style={{ display:'flex', gap:'6px' }}>
+                                {['SORA','DocuSign','Otra'].map(p => (
+                                  <button key={p} onClick={() => setPlataforma(p)}
+                                    style={{ flex:1, padding:'6px', borderRadius:'6px', border:`1.5px solid ${plataforma===p?'#E8321A':'#E8E8E8'}`, background:plataforma===p?'#FFF5F5':'white', color:plataforma===p?'#E8321A':'#888', fontWeight:plataforma===p?700:400, fontSize:'10px', cursor:'pointer' }}>
+                                    {p}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <p style={{ color:'#0F2447', fontSize:'11px', fontWeight:600, margin:'0 0 6px' }}>Firmantes (en orden)</p>
+                          {firmantes.map((f,j) => (
+                            <div key={j} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 8px', background:'white', borderRadius:'6px', border:'1px solid #F0F0F0', marginBottom:'4px' }}>
+                              <span style={{ background:'#0F2447', color:'white', fontSize:'10px', fontWeight:700, padding:'1px 5px', borderRadius:'10px', minWidth:'16px', textAlign:'center' }}>{j+1}</span>
+                              <span style={{ color:'#0F2447', fontSize:'11px', flex:1 }}>{f.nombre} — {f.rol}</span>
+                              <button onClick={() => eliminarFirmante(j)} style={{ background:'none', border:'none', color:'#E8321A', cursor:'pointer', fontSize:'12px', fontWeight:700 }}>✕</button>
+                            </div>
+                          ))}
+                          <div style={{ display:'flex', flexDirection:'column', gap:'4px', marginTop:'8px', marginBottom:'8px' }}>
+                            <input value={nuevoFirmante.nombre} onChange={e => setNuevoFirmante(p=>({...p,nombre:e.target.value}))} placeholder="Nombre completo"
+                              style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
+                            <input value={nuevoFirmante.rol} onChange={e => setNuevoFirmante(p=>({...p,rol:e.target.value}))} placeholder="Rol (Ej: Director Juridico)"
+                              style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
+                            <input value={nuevoFirmante.empresa} onChange={e => setNuevoFirmante(p=>({...p,empresa:e.target.value}))} placeholder="Empresa"
+                              style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
+                            <button onClick={agregarFirmante}
+                              style={{ padding:'6px', background:'#0F2447', color:'white', border:'none', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
+                              + Agregar firmante
+                            </button>
+                          </div>
+                          <button onClick={guardarConfigFirma} disabled={guardandoFirma}
+                            style={{ width:'100%', padding:'8px', background:'#E8321A', color:'white', border:'none', borderRadius:'7px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>
+                            {guardandoFirma ? 'Guardando...' : 'Iniciar proceso de firma'}
+                          </button>
                         </div>
-                      )}
+                      ) : firma ? (
+                        <div style={{ padding:'12px', background:'#F8F8F8', borderRadius:'8px', border:'1px solid #F0F0F0', margin:'4px 0' }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
+                            <p style={{ color:'#0F2447', fontSize:'11px', fontWeight:700, margin:0 }}>
+                              Firma {firma.tipo_firma} {firma.tipo_firma==='Electronica'?`— ${firma.plataforma}`:''}
+                            </p>
+                            <span style={{ color:todosirmaron?'#166534':'#92400E', fontSize:'10px', fontWeight:700 }}>
+                              {firma.firmantes.filter((f:any)=>f.estado==='firmado').length}/{firma.firmantes.length} firmados
+                            </span>
+                          </div>
+                          <div style={{ marginBottom:'10px' }}>
+                            {firma.firmantes.map((f:any, j:number) => (
+                              <div key={j} style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 10px', background:'white', borderRadius:'7px', border:`1px solid ${f.estado==='firmado'?'#BBF7D0':'#F0F0F0'}`, marginBottom:'4px' }}>
+                                <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:f.estado==='firmado'?'#0D5C36':'#E0E2E6', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'11px', fontWeight:700, flexShrink:0 }}>
+                                  {f.estado==='firmado'?'✓':(j+1)}
+                                </div>
+                                <div style={{ flex:1 }}>
+                                  <p style={{ color:'#0F2447', fontSize:'11px', fontWeight:600, margin:'0 0 1px' }}>{f.nombre}</p>
+                                  <p style={{ color:'#888', fontSize:'10px', margin:0 }}>{f.rol} · {f.empresa}</p>
+                                  {f.estado==='firmado' && f.fecha && <p style={{ color:'#0D5C36', fontSize:'10px', margin:'2px 0 0', fontWeight:600 }}>Firmado: {f.fecha}</p>}
+                                </div>
+                                {f.estado==='pendiente' && (
+                                  <button onClick={() => marcarFirmado(j)}
+                                    style={{ background:'#0D5C36', color:'white', border:'none', padding:'4px 10px', borderRadius:'5px', fontSize:'10px', fontWeight:700, cursor:'pointer' }}>
+                                    Marcar firmado
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {todosirmaron && (
+                            <div style={{ padding:'10px', background:'#F0FDF4', borderRadius:'8px', border:'1px solid #BBF7D0', marginBottom:'8px' }}>
+                              <p style={{ color:'#166534', fontSize:'11px', fontWeight:700, margin:'0 0 8px' }}>Todos han firmado. Carga el contrato final para cerrar.</p>
+                              <label style={{ display:'block', background:'#0D5C36', color:'white', padding:'8px 12px', borderRadius:'7px', fontSize:'11px', fontWeight:700, cursor:'pointer', textAlign:'center' }}>
+                                {cerrandoExp ? 'Cerrando...' : 'Cargar contrato firmado y cerrar'}
+                                <input type="file" accept=".pdf,.docx,.doc" style={{ display:'none' }} onChange={handleCargarFirmado} />
+                              </label>
+                            </div>
+                          )}
+                          <button onClick={() => setConfigurandoFirma(true)}
+                            style={{ width:'100%', padding:'6px', background:'white', color:'#888', border:'1px solid #E8E8E8', borderRadius:'6px', fontSize:'10px', cursor:'pointer' }}>
+                            Editar configuracion
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </div>

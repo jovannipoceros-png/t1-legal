@@ -152,3 +152,30 @@ export async function cerrarExpediente(id: string, archivoFirmado: string) {
   return true
 }
 
+
+export async function crearFirma(solicitudId: string, tipoFirma: string, plataforma: string, firmantes: any[]) {
+  const supabase = createClient()
+  const { data, error } = await supabase.from('firmas').upsert([{
+    solicitud_id: solicitudId,
+    tipo_firma: tipoFirma,
+    plataforma,
+    firmantes,
+    updated_at: new Date().toISOString()
+  }], { onConflict: 'solicitud_id' }).select()
+  if (error) throw error
+  return data
+}
+
+export async function obtenerFirma(solicitudId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase.from('firmas').select('*').eq('solicitud_id', solicitudId).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data
+}
+
+export async function actualizarFirmantes(solicitudId: string, firmantes: any[]) {
+  const supabase = createClient()
+  const { error } = await supabase.from('firmas').update({ firmantes, updated_at: new Date().toISOString() }).eq('solicitud_id', solicitudId)
+  if (error) throw error
+  return true
+}
