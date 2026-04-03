@@ -31,9 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav style={{ padding:'12px 0', flex:1 }}>
           {modulos.map((m,i) => (
             <Link key={i} href={m.href}
-              style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px 20px', color:'#555', textDecoration:'none', fontSize:'13px', fontWeight:500, transition:'all 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background='#FFF5F5'; (e.currentTarget as HTMLElement).style.color='#E8321A' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background='transparent'; (e.currentTarget as HTMLElement).style.color='#555' }}>
+              style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px 20px', color:'#555', textDecoration:'none', fontSize:'13px', fontWeight:500 }}>
               <span style={{ fontSize:'15px' }}>{m.icon}</span>
               <span>{m.label}</span>
             </Link>
@@ -54,9 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <p style={{ color:'#0F2447', fontSize:'13px', margin:0, fontWeight:500 }}>T1 Legal — Sistema de Gestion Legal</p>
           <a href="/admin-login" style={{ color:'#888', fontSize:'12px', textDecoration:'none', padding:'6px 14px', border:'1px solid #E8E8E8', borderRadius:'6px' }}>Cerrar sesion</a>
         </div>
-        <div style={{ padding:'0' }}>
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   )
