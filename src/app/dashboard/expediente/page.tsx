@@ -85,6 +85,7 @@ export default function Expediente() {
   }
 
   const guardarConfigFirma = async () => {
+    console.log('firmantes:', firmantes, 'expediente:', expediente?.id)
     if (firmantes.length===0) { alert('Agrega al menos un firmante'); return }
     setGuardandoFirma(true)
     try {
