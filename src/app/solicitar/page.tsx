@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { guardarSolicitud } from '@/lib/supabase/solicitudes'
+import { guardarSolicitud, subirDocumento } from '@/lib/supabase/solicitudes'
 
 
 const Label = ({ text }: { text: string }) => (
@@ -54,6 +54,15 @@ export default function Solicitar() {
     setEnviando(true)
     try {
       const resultado = await guardarSolicitud({ ...form, flujo })
+      if (archivos.length > 0) {
+        for (const archivo of archivos) {
+          try {
+            await subirDocumento(resultado.id, archivo)
+          } catch(e) {
+            console.error('Error subiendo archivo:', e)
+          }
+        }
+      }
       setEnviado(resultado.id)
     } catch (e) {
       console.error('Error Supabase:', e); alert('Error: ' + (e as any).message)

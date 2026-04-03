@@ -112,3 +112,13 @@ export async function obtenerTracking(solicitud_id: string) {
   if (error) throw error
   return data
 }
+
+export async function subirDocumento(solicitudId: string, archivo: File) {
+  const supabase = createClient()
+  const nombreArchivo = `${solicitudId}/${Date.now()}_${archivo.name}`
+  const { data, error } = await supabase.storage
+    .from('expedientes')
+    .upload(nombreArchivo, archivo)
+  if (error) throw error
+  return data
+}
