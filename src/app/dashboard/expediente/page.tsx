@@ -18,7 +18,9 @@ export default function Expediente() {
   const [tipoFirma, setTipoFirma] = useState('Fisica')
   const [plataforma, setPlataforma] = useState('SORA')
   const [firmantes, setFirmantes] = useState<any[]>([])
-  const [nuevoFirmante, setNuevoFirmante] = useState({ nombre:'', rol:'', empresa:'' })
+  const [nNombre, setNNombre] = useState('')
+  const [nRol, setNRol] = useState('')
+  const [nEmpresa, setNEmpresa] = useState('')
   const [guardandoFirma, setGuardandoFirma] = useState(false)
 
   const buscar = async () => {
@@ -69,9 +71,11 @@ export default function Expediente() {
   }
 
   const agregarFirmante = () => {
-    if (!nuevoFirmante.nombre) return
-    setFirmantes(prev => [...prev, { ...nuevoFirmante, estado:'pendiente', fecha:null }])
-    setNuevoFirmante({ nombre:'', rol:'', empresa:'' })
+    if (!nNombre) return
+    setFirmantes(prev => [...prev, { nombre:nNombre, rol:nRol, empresa:nEmpresa, estado:'pendiente', fecha:null }])
+    setNNombre('')
+    setNRol('')
+    setNEmpresa('')
   }
 
   const eliminarFirmante = (i: number) => {
@@ -332,11 +336,11 @@ export default function Expediente() {
                             </div>
                           ))}
                           <div style={{ display:'flex', flexDirection:'column', gap:'4px', marginTop:'8px', marginBottom:'8px' }}>
-                            <input value={nuevoFirmante.nombre} onChange={e => setNuevoFirmante(p=>({...p,nombre:e.target.value}))} placeholder="Nombre completo"
+                            <input value={nNombre} onChange={e => setNNombre(e.target.value)} placeholder="Nombre completo"
                               style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
-                            <input value={nuevoFirmante.rol} onChange={e => setNuevoFirmante(p=>({...p,rol:e.target.value}))} placeholder="Rol (Ej: Director Juridico)"
+                            <input value={nRol} onChange={e => setNRol(e.target.value)} placeholder="Rol (Ej: Director Juridico)"
                               style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
-                            <input value={nuevoFirmante.empresa} onChange={e => setNuevoFirmante(p=>({...p,empresa:e.target.value}))} placeholder="Empresa"
+                            <input value={nEmpresa} onChange={e => setNEmpresa(e.target.value)} placeholder="Empresa"
                               style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
                             <button onClick={agregarFirmante}
                               style={{ padding:'6px', background:'#0F2447', color:'white', border:'none', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
