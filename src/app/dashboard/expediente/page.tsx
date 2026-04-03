@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes, guardarFirmanteCatalogo, buscarFirmantesCatalogo } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
   const [busqueda, setBusqueda] = useState('')
@@ -22,6 +22,7 @@ export default function Expediente() {
   const [nRol, setNRol] = useState('')
   const [nEmpresa, setNEmpresa] = useState('')
   const [guardandoFirma, setGuardandoFirma] = useState(false)
+  const [sugerencias, setSugerencias] = useState<any[]>([])
 
   const buscar = async () => {
     if (!busqueda.trim()) return
@@ -73,6 +74,7 @@ export default function Expediente() {
   const agregarFirmante = () => {
     if (!nNombre) return
     setFirmantes(prev => [...prev, { nombre:nNombre, rol:nRol, empresa:nEmpresa, estado:'pendiente', fecha:null }])
+    guardarFirmanteCatalogo(nNombre, nRol, nEmpresa).catch(()=>{})
     setNNombre('')
     setNRol('')
     setNEmpresa('')
@@ -102,7 +104,7 @@ export default function Expediente() {
     await actualizarFirmantes(expediente.id, nuevos)
     setFirma((prev: any) => ({ ...prev, firmantes:nuevos }))
     const todosfirmaron = nuevos.every((f: any) => f.estado==='firmado')
-    if (todosirmaron) {
+    if (todosFirmaron) {
       alert('Todos han firmado. Carga el contrato firmado para cerrar el expediente.')
     }
   }
@@ -134,7 +136,7 @@ export default function Expediente() {
   const pasoActual = expediente ? Math.max(0, pasos.indexOf(expediente.estado)) : 0
   const carpetas = ['Solicitud','Documentos','Analisis Legal','Negociacion','Firma']
 
-  const todosirmaron = firma?.firmantes?.every((f: any) => f.estado==='firmado')
+  const todosFirmaron = firma?.firmantes?.every((f: any) => f.estado==='firmado') || false
 
   return (
     <div style={{ padding:'32px', fontFamily:'sans-serif' }}>
@@ -272,7 +274,7 @@ export default function Expediente() {
                       <span style={{ background:'#F0FDF4', color:'#166534', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>Cerrado</span>
                     )}
                     {carpeta==='Firma' && firma && expediente.estado!=='Cerrado' && (
-                      <span style={{ background:todosirmaron?'#F0FDF4':'#FEF3C7', color:todosirmaron?'#166534':'#92400E', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>
+                      <span style={{ background:todosFirmaron?'#F0FDF4':'#FEF3C7', color:todosFirmaron?'#166534':'#92400E', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>
                         {firma.firmantes.filter((f:any)=>f.estado==='firmado').length}/{firma.firmantes.length}
                       </span>
                     )}
@@ -336,8 +338,19 @@ export default function Expediente() {
                             </div>
                           ))}
                           <div style={{ display:'flex', flexDirection:'column', gap:'4px', marginTop:'8px', marginBottom:'8px' }}>
-                            <input value={nNombre} onChange={e => setNNombre(e.target.value)} placeholder="Nombre completo"
+                            <input value={nNombre} onChange={async e => { setNNombre(e.target.value); if(e.target.value.length>=2){const s=await buscarFirmantesCatalogo(e.target.value);setSugerencias(s);}else{setSugerencias([])} }} placeholder="Nombre completo"
                               style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
+                            {sugerencias.length>0 && (
+                              <div style={{ background:'white', borderRadius:'6px', border:'1px solid #E8E8E8', boxShadow:'0 2px 8px rgba(0,0,0,0.1)' }}>
+                                {sugerencias.map((s,j) => (
+                                  <div key={j} onClick={() => { setNNombre(s.nombre); setNRol(s.rol||''); setNEmpresa(s.empresa||''); setSugerencias([]) }}
+                                    style={{ padding:'8px 10px', cursor:'pointer', borderBottom:'1px solid #F0F0F0', display:'flex', flexDirection:'column' }}>
+                                    <span style={{ color:'#0F2447', fontSize:'11px', fontWeight:600 }}>{s.nombre}</span>
+                                    <span style={{ color:'#888', fontSize:'10px' }}>{s.rol} · {s.empresa}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                             <input value={nRol} onChange={e => setNRol(e.target.value)} placeholder="Rol (Ej: Director Juridico)"
                               style={{ padding:'6px 8px', borderRadius:'6px', border:'1px solid #E8E8E8', fontSize:'11px', outline:'none' }} />
                             <input value={nEmpresa} onChange={e => setNEmpresa(e.target.value)} placeholder="Empresa"
@@ -358,7 +371,7 @@ export default function Expediente() {
                             <p style={{ color:'#0F2447', fontSize:'11px', fontWeight:700, margin:0 }}>
                               Firma {firma.tipo_firma} {firma.tipo_firma==='Electronica'?`— ${firma.plataforma}`:''}
                             </p>
-                            <span style={{ color:todosirmaron?'#166534':'#92400E', fontSize:'10px', fontWeight:700 }}>
+                            <span style={{ color:todosFirmaron?'#166534':'#92400E', fontSize:'10px', fontWeight:700 }}>
                               {firma.firmantes.filter((f:any)=>f.estado==='firmado').length}/{firma.firmantes.length} firmados
                             </span>
                           </div>
@@ -382,7 +395,7 @@ export default function Expediente() {
                               </div>
                             ))}
                           </div>
-                          {todosirmaron && (
+                          {todosFirmaron && (
                             <div style={{ padding:'10px', background:'#F0FDF4', borderRadius:'8px', border:'1px solid #BBF7D0', marginBottom:'8px' }}>
                               <p style={{ color:'#166534', fontSize:'11px', fontWeight:700, margin:'0 0 8px' }}>Todos han firmado. Carga el contrato final para cerrar.</p>
                               <label style={{ display:'block', background:'#0D5C36', color:'white', padding:'8px 12px', borderRadius:'7px', fontSize:'11px', fontWeight:700, cursor:'pointer', textAlign:'center' }}>

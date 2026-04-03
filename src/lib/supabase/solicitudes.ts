@@ -179,3 +179,16 @@ export async function actualizarFirmantes(solicitudId: string, firmantes: any[])
   if (error) throw error
   return true
 }
+
+export async function guardarFirmanteCatalogo(nombre: string, rol: string, empresa: string) {
+  const supabase = createClient()
+  const { data: existe } = await supabase.from('firmantes_catalogo').select('id').ilike('nombre', nombre).single()
+  if (existe) return
+  await supabase.from('firmantes_catalogo').insert([{ nombre, rol, empresa }])
+}
+
+export async function buscarFirmantesCatalogo(query: string) {
+  const supabase = createClient()
+  const { data } = await supabase.from('firmantes_catalogo').select('*').ilike('nombre', `%${query}%`).limit(5)
+  return data || []
+}
