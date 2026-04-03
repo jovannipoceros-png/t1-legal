@@ -56,6 +56,19 @@ export async function guardarSolicitud(form: any) {
     estado: esAccesoTotal ? 'activo' : 'pendiente',
   }], { onConflict: 'correo' })
 
+  try {
+    await fetch('/api/notificaciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: 'nueva_solicitud',
+        correo: 'jovanni.poceros@t1.com',
+        nombre: form.nombre,
+        id,
+        tipo_solicitud: form.tipo_solicitud
+      })
+    })
+  } catch(e) {}
   return { id, data }
 }
 

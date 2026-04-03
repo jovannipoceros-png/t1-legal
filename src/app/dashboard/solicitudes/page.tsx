@@ -21,6 +21,20 @@ export default function Solicitudes() {
     setActualizando(id)
     try {
       await actualizarEstado(id, estado)
+      const s = solicitudes.find(x => x.id === id)
+      if (s?.correo) {
+        fetch('/api/notificaciones', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo: 'estado_actualizado',
+            correo: s.correo,
+            nombre: s.nombre || 'Solicitante',
+            id,
+            estado
+          })
+        }).catch(() => {})
+      }
       await cargar()
     } catch(e) {
       alert('Error al actualizar')
