@@ -23,7 +23,7 @@ export default function Solicitudes() {
       await actualizarEstado(id, estado)
       const s = solicitudes.find(x => x.id === id)
       if (s?.correo) {
-        fetch('/api/notificaciones', {
+        fetch('https://t1-legal.vercel.app/api/notificaciones', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
