@@ -5,6 +5,7 @@ export async function guardarSolicitud(form: any) {
   const year = new Date().getFullYear()
   const timestamp = Date.now().toString().slice(-4)
   const id = `C-${year}-${timestamp}`
+
   const { data, error } = await supabase.from('solicitudes').insert([{
     id,
     nombre: form.nombre,
@@ -37,7 +38,24 @@ export async function guardarSolicitud(form: any) {
     condiciones_especiales: form.condiciones_especiales,
     estado: 'Pendiente',
   }]).select()
+
   if (error) throw error
+
+  const esAccesoTotal = form.area === 'Juridico'
+  const rol = esAccesoTotal ? 'legal' : form.es_lider === 'si' ? 'revisor' : 'lectura'
+
+  await supabase.from('usuarios').upsert([{
+    correo: form.correo,
+    nombre: form.nombre,
+    area: form.area === 'Otro' ? form.area_otro : form.area,
+    empresa_t1: form.empresa_t1,
+    es_lider: form.es_lider === 'si',
+    lider_correo: form.lider_correo,
+    lider_nombre: form.lider_nombre,
+    rol,
+    estado: esAccesoTotal ? 'activo' : 'pendiente',
+  }], { onConflict: 'correo' })
+
   return { id, data }
 }
 
