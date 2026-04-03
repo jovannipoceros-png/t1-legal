@@ -36,7 +36,7 @@ export default function Expediente() {
   const pasos = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
   const pasoActual = expediente ? pasos.indexOf(expediente.estado) : 0
 
-  const carpetas = ['01 Solicitud','02 Documentos','03 Analisis Legal','04 Negociacion','05 Firma','06 Cierre']
+  const carpetas = ['01 Solicitud','02 Documentos','03 Analisis Legal','04 Negociacion','05 Firma — Cargar contrato firmado']
 
   return (
     <div style={{ padding:'32px', fontFamily:'sans-serif' }}>
