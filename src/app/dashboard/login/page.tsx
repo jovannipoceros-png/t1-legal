@@ -22,32 +22,17 @@ export default function LoginAdmin() {
   }
 
   return (
-    <div style={{ minHeight:'100vh', background:'#0F2447', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'sans-serif' }}>
-      <div style={{ width:'100%', maxWidth:'420px', padding:'32px' }}>
-        <div style={{ textAlign:'center', marginBottom:'40px' }}>
-          <span style={{ background:'#E8321A', color:'white', fontWeight:900, fontSize:'28px', padding:'4px 16px', borderRadius:'8px' }}>T1</span>
-          <h1 style={{ color:'white', fontSize:'24px', fontWeight:700, margin:'16px 0 4px' }}>T1 Legal</h1>
-          <p style={{ color:'#B0C4DE', fontSize:'14px', margin:0 }}>Acceso administrador</p>
-        </div>
-        <div style={{ background:'rgba(255,255,255,0.08)', borderRadius:'16px', padding:'32px', border:'1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ marginBottom:'16px' }}>
-            <label style={{ display:'block', color:'rgba(255,255,255,0.8)', fontSize:'13px', fontWeight:600, marginBottom:'6px' }}>Correo</label>
-            <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="jovanni.poceros@t1.com"
-              style={{ width:'100%', padding:'12px 16px', borderRadius:'10px', border:'1px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.1)', color:'white', fontSize:'14px', boxSizing:'border-box' as any, outline:'none' }} />
+    <div style={{ minHeight:'100vh', fontFamily:'sans-serif', display:'flex' }}>
+      <div style={{ flex:1, background:'linear-gradient(135deg, #0F2447 0%, #1B3A6B 100%)', display:'flex', flexDirection:'column', justifyContent:'center', padding:'60px', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:'-60px', right:'-60px', width:'300px', height:'300px', borderRadius:'50%', background:'rgba(232,50,26,0.15)' }} />
+        <div style={{ position:'absolute', bottom:'-40px', left:'-40px', width:'200px', height:'200px', borderRadius:'50%', background:'rgba(232,50,26,0.1)' }} />
+        <div style={{ position:'relative', zIndex:1 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'48px' }}>
+            <span style={{ background:'#E8321A', color:'white', fontWeight:900, fontSize:'24px', padding:'4px 16px', borderRadius:'8px' }}>T1</span>
+            <span style={{ color:'white', fontWeight:700, fontSize:'20px' }}>Legal</span>
           </div>
-          <div style={{ marginBottom:'24px' }}>
-            <label style={{ display:'block', color:'rgba(255,255,255,0.8)', fontSize:'13px', fontWeight:600, marginBottom:'6px' }}>Contrasena</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="password"
-              onKeyDown={e => e.key==='Enter' && entrar()}
-              style={{ width:'100%', padding:'12px 16px', borderRadius:'10px', border:'1px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.1)', color:'white', fontSize:'14px', boxSizing:'border-box' as any, outline:'none' }} />
-          </div>
-          {error && <p style={{ color:'#FCA5A5', fontSize:'13px', margin:'0 0 16px', textAlign:'center' }}>{error}</p>}
-          <button onClick={entrar} disabled={cargando}
-            style={{ width:'100%', padding:'14px', background:'#E8321A', color:'white', border:'none', borderRadius:'10px', fontWeight:700, fontSize:'16px', cursor:'pointer' }}>
-            {cargando ? 'Entrando...' : 'Entrar'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+          <h1 style={{ color:'white', fontSize:'42px', fontWeight:900, margin:'0 0 16px', lineHeight:'1.2' }}>
+            Sistema de<br/>Gestion Legal
+          </h1>
+          <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'16px', margin:'0 0 48px', lineHeight:'1.6' }}>
+            Plataf
