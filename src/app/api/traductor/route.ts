@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const { texto, origen, destino } = await req.json()
-
-  const prompt = `Eres un traductor juridico especializado. Traduce el siguiente texto legal del ${origen} al ${destino} de manera precisa manteniendo los terminos juridicos correctos. Responde UNICAMENTE con la traduccion, sin explicaciones ni comentarios adicionales.
-
-TEXTO A TRADUCIR:
-${texto}`
-
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const { texto, origen, destino } = await req.json()
+    const prompt = `Traduce este texto legal del ${origen} al ${destino}. Solo responde con la traduccion, sin explicaciones:\n\n${texto}`
+    const key = process.env.GEMINI_API_KEY
+    if (!key) return NextResponse.json({ error: 'API key no configurada' })
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     })
     const data = await res.json()
-    const traduccion = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Error al traducir'
+    if (data.error) return NextResponse.json({ error: data.error.message })
+    const traduccion = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!traduccion) return NextResponse.json({ error: 'Sin respuesta de Gemini' })
     return NextResponse.json({ traduccion })
-  } catch(e) {
-    return NextResponse.json({ error: 'Error al conectar con Gemini' })
+  } catch(e: any) {
+    return NextResponse.json({ error: e.message || 'Error desconocido' })
   }
 }
