@@ -9,6 +9,9 @@ export default function Expediente() {
   const [documentos, setDocumentos] = useState<any[]>([])
   const [resultados, setResultados] = useState<any[]>([])
   const [buscando, setBuscando] = useState(false)
+  const [carpetaAbierta, setCarpetaAbierta] = useState<string|null>(null)
+  const [vistaPrevia, setVistaPrevia] = useState<string|null>(null)
+  const [vistaNombre, setVistaNombre] = useState('')
 
   const buscar = async () => {
     if (!busqueda.trim()) return
@@ -29,20 +32,46 @@ export default function Expediente() {
 
   const abrirExpediente = async (s: any) => {
     setExpediente(s)
+    setResultados([])
+    setCarpetaAbierta(null)
     const t = await obtenerTracking(s.id)
     setTracking(t||[])
     const docs = await obtenerDocumentos(s.id)
     setDocumentos(docs||[])
-    setResultados([])
+  }
+
+  const verDocumento = async (doc: any) => {
+    const url = await obtenerUrlDocumento(expediente.id, doc.name)
+    if (url) { setVistaNombre(doc.name.replace(/^\d+_/, '')); setVistaPrevia(url) }
+  }
+
+  const descargarDocumento = async (doc: any) => {
+    const url = await obtenerUrlDocumento(expediente.id, doc.name)
+    if (url) window.open(url, '_blank')
   }
 
   const pasos = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
-  const pasoActual = expediente ? pasos.indexOf(expediente.estado) : 0
-
+  const pasoActual = expediente ? Math.max(0, pasos.indexOf(expediente.estado)) : 0
   const carpetas = ['01 Solicitud','02 Documentos','03 Analisis Legal','04 Negociacion','05 Firma — Cargar contrato firmado']
 
   return (
     <div style={{ padding:'32px', fontFamily:'sans-serif' }}>
+      {vistaPrevia && (
+        <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.85)', zIndex:1000, display:'flex', flexDirection:'column' }}>
+          <div style={{ background:'white', padding:'12px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid #F0F0F0' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+              <span style={{ background:'#E8321A', color:'white', fontWeight:900, fontSize:'14px', padding:'2px 10px', borderRadius:'4px' }}>T1</span>
+              <p style={{ color:'#0F2447', fontWeight:700, fontSize:'14px', margin:0 }}>{vistaNombre}</p>
+            </div>
+            <div style={{ display:'flex', gap:'8px' }}>
+              <button onClick={() => window.open(vistaPrevia, '_blank')} style={{ background:'#0F2447', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>Descargar</button>
+              <button onClick={() => setVistaPrevia(null)} style={{ background:'#E8321A', color:'white', border:'none', padding:'7px 16px', borderRadius:'7px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>Cerrar ✕</button>
+            </div>
+          </div>
+          <iframe src={vistaPrevia} style={{ flex:1, border:'none', width:'100%' }} />
+        </div>
+      )}
+
       <h1 style={{ color:'#0F2447', fontSize:'24px', fontWeight:700, margin:'0 0 4px' }}>Expediente Digital</h1>
       <p style={{ color:'#888', margin:'0 0 24px' }}>Busca por ID, empresa o nombre del solicitante</p>
 
@@ -65,7 +94,7 @@ export default function Expediente() {
               <span style={{ background:'#0F2447', color:'white', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{s.id}</span>
               <span style={{ color:'#0F2447', fontSize:'13px', fontWeight:600 }}>{s.nombre_empresa||s.nombre||'Sin nombre'}</span>
               <span style={{ color:'#888', fontSize:'12px' }}>{s.tipo_solicitud} · {s.empresa_t1}</span>
-              <span style={{ background:s.estado==='Cerrado'?'#F0FDF4':'#FEF3C7', color:s.estado==='Cerrado'?'#166534':'#92400E', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', marginLeft:'auto' }}>{s.estado}</span>
+              <span style={{ background:'#FEF3C7', color:'#92400E', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', marginLeft:'auto' }}>{s.estado}</span>
             </div>
           ))}
         </div>
@@ -87,9 +116,7 @@ export default function Expediente() {
                   <h2 style={{ color:'#0F2447', fontSize:'18px', fontWeight:700, margin:'0 0 4px' }}>{expediente.nombre_empresa||'Sin contraparte'}</h2>
                   <p style={{ color:'#888', fontSize:'13px', margin:0 }}>{expediente.tipo_solicitud} — {expediente.empresa_t1}</p>
                 </div>
-                <div style={{ display:'flex', gap:'8px' }}>
-                  <button style={{ background:'#E8321A', color:'white', border:'none', padding:'8px 16px', borderRadius:'8px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>Ir al editor</button>
-                </div>
+                <button style={{ background:'#E8321A', color:'white', border:'none', padding:'8px 16px', borderRadius:'8px', fontSize:'12px', fontWeight:700, cursor:'pointer' }}>Ir al editor</button>
               </div>
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'20px' }}>
@@ -110,7 +137,7 @@ export default function Expediente() {
                 ))}
               </div>
 
-              <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 16px' }}>Seguimiento del expediente</h3>
+              <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 16px' }}>Seguimiento</h3>
               <div style={{ position:'relative', padding:'8px 0 32px', marginBottom:'20px' }}>
                 <div style={{ position:'absolute', top:'20px', left:'5%', right:'5%', height:'3px', background:'#F0F0F0' }} />
                 <div style={{ position:'absolute', top:'20px', left:'5%', width:`${Math.max(0,(pasoActual/(pasos.length-1))*90)}%`, height:'3px', background:'#E8321A' }} />
@@ -127,7 +154,7 @@ export default function Expediente() {
                 </div>
               </div>
 
-              <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 14px' }}>Historial completo</h3>
+              <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 14px' }}>Historial</h3>
               <div style={{ position:'relative', paddingLeft:'20px' }}>
                 <div style={{ position:'absolute', left:'8px', top:0, bottom:0, width:'2px', background:'#F0F0F0' }} />
                 <div style={{ position:'relative', marginBottom:'14px' }}>
@@ -149,47 +176,32 @@ export default function Expediente() {
           <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
             <div style={{ background:'white', borderRadius:'16px', padding:'20px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
               <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 14px' }}>Carpetas del expediente</h3>
-              {carpetas.map((c,i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 10px', borderRadius:'7px', border:'1px solid #F0F0F0', marginBottom:'5px', cursor:'pointer', background:'#FAFAFA' }}>
-                  <span style={{ fontSize:'14px' }}>📁</span>
-                  <span style={{ color:'#0F2447', fontSize:'12px', fontWeight:500 }}>{c}</span>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ background:'white', borderRadius:'16px', padding:'20px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
-              <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 14px' }}>Documentos cargados</h3>
-              {documentos.length === 0 ? (
-                <p style={{ color:'#888', fontSize:'12px', margin:0 }}>Sin documentos adjuntos</p>
-              ) : documentos.map((doc: any, i: number) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px', background:'#F8F8F8', borderRadius:'8px', marginBottom:'6px', border:'1px solid #F0F0F0' }}>
-                  <span style={{ fontSize:'20px' }}>📄</span>
-                  <div style={{ flex:1 }}>
-                    <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:600, margin:0 }}>{doc.name.replace(/^d+_/, '')}</p>
-                    <p style={{ color:'#888', fontSize:'10px', margin:0 }}>{doc.metadata?.size ? Math.round(doc.metadata.size/1024) + ' KB' : ''}</p>
+              {carpetas.map((carpeta,i) => (
+                <div key={i}>
+                  <div onClick={() => setCarpetaAbierta(carpetaAbierta===carpeta?null:carpeta)}
+                    style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 10px', borderRadius:'7px', border:'1px solid #F0F0F0', marginBottom:'4px', cursor:'pointer', background:carpetaAbierta===carpeta?'#FFF5F5':'#FAFAFA' }}>
+                    <span style={{ fontSize:'14px' }}>{carpetaAbierta===carpeta?'📂':'📁'}</span>
+                    <span style={{ color:'#0F2447', fontSize:'12px', fontWeight:500, flex:1 }}>{carpeta}</span>
+                    {carpeta==='02 Documentos' && documentos.length>0 && (
+                      <span style={{ background:'#E8321A', color:'white', fontSize:'10px', fontWeight:700, padding:'1px 6px', borderRadius:'10px' }}>{documentos.length}</span>
+                    )}
                   </div>
-                  <button onClick={async () => {
-                    const url = await obtenerUrlDocumento(expediente.id, doc.name)
-                    if (url) window.open(url, '_blank')
-                  }} style={{ background:'#0F2447', color:'white', border:'none', padding:'6px 12px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
-                    Descargar
-                  </button>
+                  {carpetaAbierta===carpeta && carpeta==='02 Documentos' && (
+                    <div style={{ paddingLeft:'16px', marginBottom:'4px' }}>
+                      {documentos.length===0 ? (
+                        <p style={{ color:'#888', fontSize:'11px', margin:'4px 0 8px' }}>Sin documentos</p>
+                      ) : documentos.map((doc: any, j: number) => (
+                        <div key={j} style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 10px', borderRadius:'7px', border:'1px solid #F0F0F0', marginBottom:'4px', background:'white' }}>
+                          <span style={{ fontSize:'14px' }}>📄</span>
+                          <span style={{ color:'#0F2447', fontSize:'11px', fontWeight:500, flex:1 }}>{doc.name.replace(/^\d+_/, '')}</span>
+                          <button onClick={() => verDocumento(doc)} style={{ background:'#0F2447', color:'white', border:'none', padding:'4px 8px', borderRadius:'5px', fontSize:'10px', fontWeight:700, cursor:'pointer' }}>Ver</button>
+                          <button onClick={() => descargarDocumento(doc)} style={{ background:'#E8321A', color:'white', border:'none', padding:'4px 8px', borderRadius:'5px', fontSize:'10px', fontWeight:700, cursor:'pointer' }}>⬇</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
-              {expediente.flujo==='A' ? (
-                <div style={{ padding:'12px', background:'#FFF8F0', borderRadius:'8px', border:'1px solid #FED7AA', marginBottom:'8px' }}>
-                  <p style={{ color:'#92400E', fontSize:'12px', fontWeight:700, margin:'0 0 2px' }}>Contrato del socio comercial</p>
-                  <p style={{ color:'#92400E', fontSize:'11px', margin:0 }}>Cargado el {new Date(expediente.created_at).toLocaleDateString('es-MX')}</p>
-                </div>
-              ) : (
-                <p style={{ color:'#888', fontSize:'12px', margin:0 }}>Los documentos se gestionan en el Editor</p>
-              )}
-              {expediente.tiene_contrato_previo === 'Si' && (
-                <div style={{ padding:'12px', background:'#EFF6FF', borderRadius:'8px', border:'1px solid #BFDBFE' }}>
-                  <p style={{ color:'#1D4ED8', fontSize:'12px', fontWeight:700, margin:'0 0 2px' }}>Contrato previo adjunto</p>
-                  <p style={{ color:'#1D4ED8', fontSize:'11px', margin:0 }}>Referencia para este expediente</p>
-                </div>
-              )}
             </div>
 
             <div style={{ background:'white', borderRadius:'16px', padding:'20px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
@@ -202,11 +214,11 @@ export default function Expediente() {
         </div>
       )}
 
-      {!expediente && resultados.length === 0 && (
+      {!expediente && resultados.length===0 && (
         <div style={{ background:'white', borderRadius:'16px', padding:'48px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', textAlign:'center', border:'1px solid #F0F0F0' }}>
           <p style={{ fontSize:'32px', marginBottom:'16px' }}>📁</p>
           <p style={{ color:'#0F2447', fontWeight:700, fontSize:'16px', margin:'0 0 8px' }}>Busca un expediente</p>
-          <p style={{ color:'#888', fontSize:'13px', margin:0 }}>Escribe el ID o nombre para ver el expediente completo con tracking y documentos</p>
+          <p style={{ color:'#888', fontSize:'13px', margin:0 }}>Escribe el ID o nombre para ver el expediente completo</p>
         </div>
       )}
     </div>
