@@ -122,3 +122,20 @@ export async function subirDocumento(solicitudId: string, archivo: File) {
   if (error) throw error
   return data
 }
+
+export async function obtenerDocumentos(solicitudId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase.storage
+    .from('expedientes')
+    .list(solicitudId)
+  if (error) throw error
+  return data || []
+}
+
+export async function obtenerUrlDocumento(solicitudId: string, nombreArchivo: string) {
+  const supabase = createClient()
+  const { data } = await supabase.storage
+    .from('expedientes')
+    .createSignedUrl(`${solicitudId}/${nombreArchivo}`, 3600)
+  return data?.signedUrl || ''
+}

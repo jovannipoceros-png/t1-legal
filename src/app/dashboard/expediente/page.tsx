@@ -156,6 +156,23 @@ export default function Expediente() {
 
             <div style={{ background:'white', borderRadius:'16px', padding:'20px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
               <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 14px' }}>Documentos cargados</h3>
+              {documentos.length === 0 ? (
+                <p style={{ color:'#888', fontSize:'12px', margin:0 }}>Sin documentos adjuntos</p>
+              ) : documentos.map((doc: any, i: number) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px', background:'#F8F8F8', borderRadius:'8px', marginBottom:'6px', border:'1px solid #F0F0F0' }}>
+                  <span style={{ fontSize:'20px' }}>📄</span>
+                  <div style={{ flex:1 }}>
+                    <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:600, margin:0 }}>{doc.name.replace(/^d+_/, '')}</p>
+                    <p style={{ color:'#888', fontSize:'10px', margin:0 }}>{doc.metadata?.size ? Math.round(doc.metadata.size/1024) + ' KB' : ''}</p>
+                  </div>
+                  <button onClick={async () => {
+                    const url = await obtenerUrlDocumento(expediente.id, doc.name)
+                    if (url) window.open(url, '_blank')
+                  }} style={{ background:'#0F2447', color:'white', border:'none', padding:'6px 12px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
+                    Descargar
+                  </button>
+                </div>
+              ))}
               {expediente.flujo==='A' ? (
                 <div style={{ padding:'12px', background:'#FFF8F0', borderRadius:'8px', border:'1px solid #FED7AA', marginBottom:'8px' }}>
                   <p style={{ color:'#92400E', fontSize:'12px', fontWeight:700, margin:'0 0 2px' }}>Contrato del socio comercial</p>
