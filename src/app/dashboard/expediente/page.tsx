@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
-import { obtenerSolicitudes, obtenerTracking } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
   const [busqueda, setBusqueda] = useState('')
   const [expediente, setExpediente] = useState<any>(null)
   const [tracking, setTracking] = useState<any[]>([])
+  const [documentos, setDocumentos] = useState<any[]>([])
   const [resultados, setResultados] = useState<any[]>([])
   const [buscando, setBuscando] = useState(false)
 
@@ -30,6 +31,8 @@ export default function Expediente() {
     setExpediente(s)
     const t = await obtenerTracking(s.id)
     setTracking(t||[])
+    const docs = await obtenerDocumentos(s.id)
+    setDocumentos(docs||[])
     setResultados([])
   }
 
