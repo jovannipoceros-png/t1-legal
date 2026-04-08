@@ -16,6 +16,7 @@ export default function Monitor() {
   const [tab, setTab] = useState('alertas')
   const [avisoEnviado, setAvisoEnviado] = useState(false)
   const [enviandoAviso, setEnviandoAviso] = useState(false)
+  const [filtroActivo, setFiltroActivo] = useState<string|null>(null)
 
   const hoy = new Date()
   hoy.setHours(0, 0, 0, 0)
@@ -158,10 +159,10 @@ export default function Monitor() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}>
           {[
-            { label: 'Vencidos', val: vencidas.length, color: '#E8321A', bg: '#FFF5F5' },
-            { label: 'Próximos a vencer', val: proximas.length, color: '#F59E0B', bg: '#FFFBEB' },
-            { label: 'Sin movimiento', val: sinMovimiento.length, color: '#888', bg: '#F8F8F8' },
-            { label: 'Contratos extranjeros', val: internacionales.length, color: '#1D4ED8', bg: '#EFF6FF' },
+            { label: 'Vencidos', val: vencidas.length, color: '#E8321A', bg: '#FFF5F5', filtro:'vencidas' },
+            { label: 'Proximos a vencer', val: proximas.length, color: '#F59E0B', bg: '#FFFBEB', filtro:'proximas' },
+            { label: 'Sin movimiento', val: sinMovimiento.length, color: '#888', bg: '#F8F8F8', filtro:'sinMovimiento' },
+            { label: 'Contratos extranjeros', val: internacionales.length, color: '#1D4ED8', bg: '#EFF6FF', filtro:'internacionales' },
           ].map((k, i) => (
             <div key={i} style={{ background: k.bg, borderRadius: '10px', padding: '16px', border: `1px solid ${k.color}20` }}>
               <p style={{ fontSize: '30px', fontWeight: 700, color: k.color, margin: '0 0 4px' }}>{cargando ? '...' : k.val}</p>
@@ -184,7 +185,13 @@ export default function Monitor() {
 
         {tab === 'alertas' && (
           <div>
-            {vencidas.length > 0 && (<>
+            {filtroActivo && (
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'16px', padding:'8px 14px', background:'#F0F0F0', borderRadius:'8px' }}>
+                <span style={{ fontSize:'12px', color:'#555' }}>Filtrando: <strong>{filtroActivo==='vencidas'?'Vencidos':filtroActivo==='proximas'?'Proximos a vencer':filtroActivo==='sinMovimiento'?'Sin movimiento':'Contratos extranjeros'}</strong></span>
+                <button onClick={() => setFiltroActivo(null)} style={{ background:'none', border:'none', color:'#E8321A', cursor:'pointer', fontSize:'12px', fontWeight:700, marginLeft:'auto' }}>Quitar filtro ✕</button>
+              </div>
+            )}
+            {(filtroActivo===null || filtroActivo==='vencidas') && vencidas.length > 0 && (<>
               <p style={secTit()}>Vencidos — acción inmediata</p>
               {vencidas.map((s, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '10px', border: '1px solid #FCA5A5', background: '#FFF5F5', marginBottom: '6px' }}>
@@ -200,7 +207,7 @@ export default function Monitor() {
               ))}
             </>)}
 
-            {proximas.length > 0 && (<>
+            {(filtroActivo===null || filtroActivo==='proximas') && proximas.length > 0 && (<>
               <p style={secTit(vencidas.length > 0)}>Próximos a vencer</p>
               {proximas.map((s, i) => {
                 const dias = getDiasRestantes(s.fecha_limite)
@@ -224,7 +231,7 @@ export default function Monitor() {
               })}
             </>)}
 
-            {sinMovimiento.length > 0 && (<>
+            {(filtroActivo===null || filtroActivo==='sinMovimiento') && sinMovimiento.length > 0 && (<>
               <p style={secTit(true)}>Sin movimiento — tiempo límite superado</p>
               {sinMovimiento.map((s, i) => {
                 const limite = getLimitePorPrioridad(s.prioridad || 'Baja')
