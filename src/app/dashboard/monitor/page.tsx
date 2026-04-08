@@ -238,7 +238,7 @@ export default function Monitor() {
                     </div>
                     <span style={chipId}>{s.id}</span>
                     <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>{s.estado}</span>
-                    <button style={btnVer} onClick={() => window.location.href = `/dashboard/solicitudes?id=${s.id}`}>Ver solicitud →</button>
+                    <button style={btnVer} onClick={() => window.location.href = `/dashboard/solicitudes/${s.id}`}>Ver solicitud →</button>
                   </div>
                 )
               })}
