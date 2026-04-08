@@ -254,6 +254,22 @@ export default function Monitor() {
               })}
             </>)}
 
+            {(filtroActivo===null || filtroActivo==='internacionales') && internacionales.length > 0 && (<>
+              <p style={secTit(true)}>Contratos extranjeros activos</p>
+              {internacionales.map((s, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '10px', border: '1px solid #BFDBFE', background: '#EFF6FF', marginBottom: '6px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1D4ED8', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F2447', display: 'block', marginBottom: '2px' }}>{s.nombre_empresa || s.nombre || 'Sin nombre'} — {s.tipo_solicitud}</span>
+                    <p style={{ fontSize: '11px', color: '#1D4ED8', fontWeight: 600, margin: 0 }}>Nacionalidad: {s.nacionalidad} · {s.estado}</p>
+                  </div>
+                  <span style={{ background: '#0F2447', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '10px' }}>{s.id}</span>
+                  <button style={btnVer} onClick={() => window.location.href = `/dashboard/expediente?buscar=${s.id}`}>Ver expediente →</button>
+                  <button style={{...btnVer, color:'#7C3AED'}} onClick={() => window.location.href = `/dashboard/solicitudes/${s.id}`}>Ver solicitud →</button>
+                </div>
+              ))}
+            </>)}
+
             {totalAlertas === 0 && !cargando && (
               <div style={{ textAlign: 'center', padding: '40px' }}>
                 <p style={{ fontSize: '40px', margin: '0 0 12px' }}>✅</p>
