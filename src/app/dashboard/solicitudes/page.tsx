@@ -5,8 +5,7 @@ import { obtenerSolicitudes, actualizarEstado } from '@/lib/supabase/solicitudes
 export default function Solicitudes() {
   const [solicitudes, setSolicitudes] = useState<any[]>([])
   const [filtro, setFiltro] = useState('todas')
-  const idDesdeUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('buscar') || '' : ''
-  const [busqueda, setBusqueda] = useState(idDesdeUrl)
+  const [busqueda, setBusqueda] = useState('')
   const [cargando, setCargando] = useState(true)
   const [actualizando, setActualizando] = useState<string|null>(null)
 

@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react'
 import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes, guardarFirmanteCatalogo, buscarFirmantesCatalogo } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-  const idDesdeUrl = searchParams?.get('buscar') || ''
-  const [busqueda, setBusqueda] = useState(idDesdeUrl)
+  const [busqueda, setBusqueda] = useState('')
 
   useEffect(() => {
     if (idDesdeUrl) {
