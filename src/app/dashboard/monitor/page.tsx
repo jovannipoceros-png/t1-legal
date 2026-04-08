@@ -195,7 +195,7 @@ export default function Monitor() {
                   </div>
                   <span style={chipId}>{s.id}</span>
                   <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>{s.prioridad || 'Sin prioridad'}</span>
-                  <button style={btnVer} onClick={() => window.location.href = `/dashboard/expediente?id=${s.id}`}>Ver expediente →</button>
+                  <button style={btnVer} onClick={() => window.location.href = `/dashboard/expediente/${s.id}`}>Ver expediente →</button>
                 </div>
               ))}
             </>)}
@@ -218,7 +218,7 @@ export default function Monitor() {
                     </div>
                     <span style={chipId}>{s.id}</span>
                     <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>{s.prioridad || 'Sin prioridad'}</span>
-                    <button style={btnVer} onClick={() => window.location.href = `/dashboard/expediente?id=${s.id}`}>Ver expediente →</button>
+                    <button style={btnVer} onClick={() => window.location.href = `/dashboard/expediente/${s.id}`}>Ver expediente →</button>
                   </div>
                 )
               })}
@@ -332,7 +332,7 @@ export default function Monitor() {
                     </div>
                     <p style={{ fontSize: '13px', fontWeight: 600, color: '#0F2447', margin: '0 0 3px' }}>{s.nombre_empresa || s.nombre || 'Sin nombre'} — {s.tipo_solicitud}</p>
                     <p style={{ fontSize: '11px', color: '#888', margin: '0 0 6px' }}>{(s.descripcion || '').substring(0, 100)}{(s.descripcion || '').length > 100 ? '...' : ''}</p>
-                    <button style={btnVer} onClick={() => window.location.href = `/dashboard/expediente?id=${s.id}`}>Ver expediente →</button>
+                    <button style={btnVer} onClick={() => window.location.href = `/dashboard/expediente/${s.id}`}>Ver expediente →</button>
                   </div>
                 )
               })}
