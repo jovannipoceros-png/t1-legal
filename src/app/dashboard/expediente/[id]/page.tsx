@@ -35,7 +35,7 @@ export default function ExpedienteDetalle() {
 
   const verDocumento = async (doc: any) => {
     try {
-      const url = await obtenerUrlDocumento(doc.ruta)
+      const url = await obtenerUrlDocumento(id, doc.nombre)
       if (url) { setVistaPrevia(url); setVistaNombre(doc.nombre) }
     } catch(e) { console.error(e) }
   }
