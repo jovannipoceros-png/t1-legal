@@ -58,19 +58,13 @@ export default function SolicitudDetalle() {
       await fetch('/api/notificaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tipo: 'documentos_faltantes',
-          correo: solicitud.correo,
-          nombre: solicitud.nombre || 'Solicitante',
-          id,
-          documentos_faltantes: docsFaltantes
-        })
+        body: JSON.stringify({ tipo: 'documentos_faltantes', correo: solicitud.correo, nombre: solicitud.nombre || 'Solicitante', id, documentos_faltantes: docsFaltantes })
       })
       setEmailEnviado(true)
       setDocsFaltantes('')
       setMostrarEmailForm(false)
       setTimeout(() => setEmailEnviado(false), 4000)
-    } catch(e) { alert('Error al enviar email') }
+    } catch(e) { alert('Error al enviar') }
     setEnviandoEmail(false)
   }
 
@@ -92,9 +86,20 @@ export default function SolicitudDetalle() {
 
   const estados = ['Pendiente','En revision','En negociacion','Lista para firma']
 
+  const Chip = ({ label, color, bg }: any) => (
+    <span style={{ background:bg, color, fontSize:'10px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>{label}</span>
+  )
+
+  const Campo = ({ label, val }: any) => val && val !== '—' ? (
+    <div style={{ background:'#F8F8F8', borderRadius:'8px', padding:'10px 14px' }}>
+      <p style={{ fontSize:'10px', color:'#888', margin:'0 0 3px' }}>{label}</p>
+      <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:0, wordBreak:'break-word' as any }}>{val}</p>
+    </div>
+  ) : null
+
   if (cargando) return (
     <div style={{ padding:'32px', fontFamily:'sans-serif', textAlign:'center', color:'#888', paddingTop:'80px' }}>
-      <p style={{ fontSize:'16px' }}>Cargando solicitud...</p>
+      Cargando solicitud...
     </div>
   )
 
@@ -107,136 +112,163 @@ export default function SolicitudDetalle() {
 
   return (
     <div style={{ padding:'32px', fontFamily:'sans-serif', background:'#F7F8FA', minHeight:'100vh' }}>
-      <button onClick={() => router.push('/dashboard/solicitudes')} style={{ background:'none', border:'none', color:'#1D4ED8', cursor:'pointer', fontSize:'13px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'4px' }}>
+      <button onClick={() => router.push('/dashboard/solicitudes')} style={{ background:'none', border:'none', color:'#1D4ED8', cursor:'pointer', fontSize:'13px', marginBottom:'20px' }}>
         ← Regresar a solicitudes
       </button>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:'16px', alignItems:'flex-start' }}>
-
-        <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:'16px', alignItems:'flex-start' }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
 
           {/* ENCABEZADO */}
           <div style={{ background:'white', borderRadius:'14px', padding:'24px', border:'1px solid #F0F0F0' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
-              <div>
-                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px', flexWrap:'wrap' }}>
-                  <span style={{ background:'#0F2447', color:'white', fontSize:'13px', fontWeight:700, padding:'4px 12px', borderRadius:'20px' }}>{solicitud.id}</span>
-                  <span style={{ background:solicitud.flujo==='A'?'#FEF3C7':'#EFF6FF', color:solicitud.flujo==='A'?'#92400E':'#1D4ED8', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>
-                    {solicitud.flujo==='A'?'Socio comercial':'Juridica T1'}
-                  </span>
-                  {solicitud.confidencial && <span style={{ background:'#FFF5F5', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px', border:'1px solid #FFD0CC' }}>Confidencial</span>}
-                  {solicitud.prioridad==='Alta' && <span style={{ background:'#FEE2E2', color:'#C42A15', fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>Urgente</span>}
-                </div>
-                <h1 style={{ color:'#0F2447', fontSize:'20px', fontWeight:700, margin:'0 0 4px' }}>{solicitud.nombre || 'Sin nombre'} — {solicitud.area || 'Sin area'}</h1>
-                <p style={{ color:'#888', fontSize:'13px', margin:0 }}>{solicitud.tipo_solicitud || 'Sin tipo'} · {solicitud.empresa_t1}</p>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'14px' }}>
+              <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', alignItems:'center' }}>
+                <span style={{ background:'#0F2447', color:'white', fontSize:'13px', fontWeight:700, padding:'4px 12px', borderRadius:'20px' }}>{solicitud.id}</span>
+                <Chip label={solicitud.flujo==='A'?'Socio comercial':'Juridica T1'} color={solicitud.flujo==='A'?'#92400E':'#1D4ED8'} bg={solicitud.flujo==='A'?'#FEF3C7':'#EFF6FF'} />
+                {solicitud.confidencial && <Chip label="Confidencial" color="#C42A15" bg="#FFF5F5" />}
+                {solicitud.prioridad==='Alta' && <Chip label="Urgente" color="#C42A15" bg="#FEE2E2" />}
               </div>
-              <span style={{ background:estadoColor[solicitud.estado]?.bg||'#F8F8F8', color:estadoColor[solicitud.estado]?.color||'#888', fontSize:'12px', fontWeight:700, padding:'6px 14px', borderRadius:'10px', flexShrink:0 }}>
+              <span style={{ background:estadoColor[solicitud.estado]?.bg||'#F8F8F8', color:estadoColor[solicitud.estado]?.color||'#888', fontSize:'12px', fontWeight:700, padding:'5px 12px', borderRadius:'10px' }}>
                 {solicitud.estado}
               </span>
             </div>
+            <h1 style={{ color:'#0F2447', fontSize:'20px', fontWeight:700, margin:'0 0 4px' }}>{solicitud.nombre_empresa || solicitud.nombre || 'Sin nombre'}</h1>
+            <p style={{ color:'#888', fontSize:'13px', margin:0 }}>{solicitud.tipo_solicitud} · {solicitud.empresa_t1} · {new Date(solicitud.created_at).toLocaleDateString('es-MX')}</p>
+          </div>
 
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px' }}>
-              {[
-                { label:'Prioridad', val: solicitud.prioridad||'—' },
-                { label:'Fecha limite', val: solicitud.fecha_limite ? new Date(solicitud.fecha_limite).toLocaleDateString('es-MX') : 'Sin fecha' },
-                { label:'Fecha de solicitud', val: new Date(solicitud.created_at).toLocaleDateString('es-MX') },
-                { label:'Empresa T1', val: solicitud.empresa_t1||'—' },
-                { label:'Correo', val: solicitud.correo||'—' },
-                { label:'Nacionalidad', val: solicitud.nacionalidad||'—' },
-              ].map((item,i) => (
-                <div key={i} style={{ background:'#F8F8F8', borderRadius:'10px', padding:'12px 14px' }}>
-                  <p style={{ fontSize:'11px', color:'#888', margin:'0 0 4px' }}>{item.label}</p>
-                  <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:0, wordBreak:'break-all' as any }}>{item.val}</p>
-                </div>
-              ))}
+          {/* SOLICITANTE */}
+          <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
+            <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>Solicitante</p>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px' }}>
+              <Campo label="Nombre" val={solicitud.nombre||'—'} />
+              <Campo label="Correo" val={solicitud.correo||'—'} />
+              <Campo label="Area" val={solicitud.area||'—'} />
+              <Campo label="Empresa T1" val={solicitud.empresa_t1||'—'} />
+              <Campo label="Prioridad" val={solicitud.prioridad||'—'} />
+              <Campo label="Fecha limite" val={solicitud.fecha_limite ? new Date(solicitud.fecha_limite).toLocaleDateString('es-MX') : null} />
             </div>
-
-            {solicitud.descripcion && (
-              <div style={{ background:'#F8F8F8', borderRadius:'10px', padding:'14px', marginTop:'12px' }}>
-                <p style={{ fontSize:'11px', color:'#888', margin:'0 0 6px' }}>Descripcion</p>
-                <p style={{ fontSize:'13px', color:'#0F2447', margin:0, lineHeight:1.6 }}>{solicitud.descripcion}</p>
-              </div>
-            )}
-
-            {solicitud.condiciones_especiales && (
-              <div style={{ background:'#FFFBEB', borderRadius:'10px', padding:'14px', marginTop:'10px', border:'1px solid #FDE68A' }}>
-                <p style={{ fontSize:'11px', color:'#92400E', margin:'0 0 6px' }}>Condiciones especiales</p>
-                <p style={{ fontSize:'13px', color:'#0F2447', margin:0, lineHeight:1.6 }}>{solicitud.condiciones_especiales}</p>
+            {solicitud.lider_nombre && (
+              <div style={{ marginTop:'10px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                <Campo label="Lider de area" val={solicitud.lider_nombre} />
+                <Campo label="Correo del lider" val={solicitud.lider_correo} />
               </div>
             )}
           </div>
 
+          {/* DOCUMENTO */}
+          <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
+            <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>Documento</p>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'10px' }}>
+              <Campo label="Tipo de solicitud" val={solicitud.tipo_solicitud||'—'} />
+              <Campo label="Idioma" val={solicitud.idioma||'—'} />
+              <Campo label="Requiere traduccion" val={solicitud.requiere_traduccion||'—'} />
+              {solicitud.idioma_traduccion && <Campo label="Idioma de traduccion" val={solicitud.idioma_traduccion} />}
+            </div>
+            {solicitud.descripcion && (
+              <div style={{ background:'#F8F8F8', borderRadius:'8px', padding:'12px 14px', marginBottom:'8px' }}>
+                <p style={{ fontSize:'10px', color:'#888', margin:'0 0 4px' }}>Que necesita del area legal</p>
+                <p style={{ fontSize:'13px', color:'#0F2447', margin:0, lineHeight:1.6 }}>{solicitud.descripcion}</p>
+              </div>
+            )}
+          </div>
+
+          {/* CONTRAPARTE */}
+          <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
+            <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>Contraparte</p>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px' }}>
+              <Campo label="Empresa" val={solicitud.nombre_empresa||'—'} />
+              <Campo label="RFC" val={solicitud.rfc||'—'} />
+              <Campo label="Apoderado legal" val={solicitud.apoderado||'—'} />
+              <Campo label="Nacionalidad" val={solicitud.nacionalidad||'—'} />
+              <Campo label="Contrato previo" val={solicitud.tiene_contrato_previo||'—'} />
+            </div>
+            {solicitud.nacionalidad && solicitud.nacionalidad !== 'Mexicana' && (
+              <div style={{ marginTop:'10px', background:'#EFF6FF', borderRadius:'8px', padding:'10px 14px', border:'1px solid #BFDBFE' }}>
+                <p style={{ fontSize:'12px', color:'#1D4ED8', fontWeight:700, margin:0 }}>Contraparte internacional — Requiere documentacion adicional</p>
+              </div>
+            )}
+          </div>
+
+          {/* CONDICIONES */}
+          {(solicitud.vigencia || solicitud.contraprestacion || solicitud.plazo_pago || solicitud.tipo_firma || solicitud.condiciones_especiales) && (
+            <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
+              <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>Condiciones comerciales</p>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'10px' }}>
+                <Campo label="Vigencia" val={solicitud.vigencia||null} />
+                <Campo label="Contraprestacion" val={solicitud.contraprestacion||null} />
+                <Campo label="Plazo de pago" val={solicitud.plazo_pago ? `${solicitud.plazo_pago} dias ${solicitud.tipo_dias_pago||''}` : null} />
+                <Campo label="Tipo de firma" val={solicitud.tipo_firma||null} />
+                <Campo label="Plataforma de firma" val={solicitud.plataforma_firma||null} />
+              </div>
+              {solicitud.condiciones_especiales && (
+                <div style={{ background:'#FFFBEB', borderRadius:'8px', padding:'12px 14px', border:'1px solid #FDE68A' }}>
+                  <p style={{ fontSize:'10px', color:'#92400E', margin:'0 0 4px' }}>Condiciones especiales</p>
+                  <p style={{ fontSize:'13px', color:'#0F2447', margin:0, lineHeight:1.6 }}>{solicitud.condiciones_especiales}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* DOCUMENTOS */}
-          <div style={{ background:'white', borderRadius:'14px', padding:'24px', border:'1px solid #F0F0F0' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'14px' }}>
-              <p style={{ fontSize:'14px', fontWeight:700, color:'#0F2447', margin:0 }}>Documentos en expediente</p>
-              <span style={{ background:documentos.length>0?'#ECFDF5':'#F8F8F8', color:documentos.length>0?'#065F46':'#888', fontSize:'12px', fontWeight:700, padding:'3px 10px', borderRadius:'10px' }}>
+          <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
+              <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:0 }}>Documentos en expediente</p>
+              <span style={{ background:documentos.length>0?'#ECFDF5':'#F8F8F8', color:documentos.length>0?'#065F46':'#888', fontSize:'11px', fontWeight:700, padding:'3px 9px', borderRadius:'10px' }}>
                 {documentos.length} archivo(s)
               </span>
             </div>
             {documentos.length === 0 ? (
-              <p style={{ color:'#888', fontSize:'13px', margin:0 }}>No hay documentos subidos aun en este expediente.</p>
-            ) : (
-              <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-                {documentos.map((doc,i) => (
-                  <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px 14px', background:'#F8F8F8', borderRadius:'8px' }}>
-                    <span style={{ fontSize:'16px' }}>📄</span>
-                    <span style={{ flex:1, fontSize:'13px', color:'#0F2447' }}>{doc.nombre}</span>
-                    <span style={{ fontSize:'11px', color:'#888' }}>{doc.carpeta}</span>
-                  </div>
-                ))}
+              <p style={{ color:'#888', fontSize:'13px', margin:0 }}>Sin documentos subidos aun.</p>
+            ) : documentos.map((doc,i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'9px 12px', background:'#F8F8F8', borderRadius:'8px', marginBottom:'5px' }}>
+                <span style={{ fontSize:'14px' }}>📄</span>
+                <span style={{ flex:1, fontSize:'12px', color:'#0F2447' }}>{doc.nombre}</span>
+                <span style={{ fontSize:'11px', color:'#888' }}>{doc.carpeta}</span>
               </div>
-            )}
+            ))}
           </div>
 
           {/* HISTORIAL */}
           {tracking.length > 0 && (
-            <div style={{ background:'white', borderRadius:'14px', padding:'24px', border:'1px solid #F0F0F0' }}>
-              <p style={{ fontSize:'14px', fontWeight:700, color:'#0F2447', margin:'0 0 16px' }}>Historial de cambios</p>
-              <div style={{ display:'flex', flexDirection:'column', gap:'0' }}>
-                {tracking.map((t,i) => (
-                  <div key={i} style={{ display:'flex', gap:'14px', paddingBottom:'14px', marginBottom:'14px', borderBottom:i<tracking.length-1?'1px solid #F0F0F0':'none' }}>
-                    <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'#0F2447', flexShrink:0, marginTop:'5px' }} />
-                    <div>
-                      <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:'0 0 2px' }}>{t.estado_nuevo || t.accion || 'Cambio de estado'}</p>
-                      <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
-                      {t.comentario && <p style={{ fontSize:'12px', color:'#555', margin:'4px 0 0', fontStyle:'italic' }}>{t.comentario}</p>}
-                    </div>
+            <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
+              <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 14px' }}>Historial de cambios</p>
+              {tracking.map((t,i) => (
+                <div key={i} style={{ display:'flex', gap:'12px', paddingBottom:'12px', marginBottom:'12px', borderBottom:i<tracking.length-1?'1px solid #F0F0F0':'none' }}>
+                  <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#0F2447', flexShrink:0, marginTop:'5px' }} />
+                  <div>
+                    <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:'0 0 2px' }}>{t.estado_nuevo || t.accion || 'Cambio de estado'}</p>
+                    <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+                    {t.comentario && <p style={{ fontSize:'12px', color:'#555', margin:'3px 0 0', fontStyle:'italic' }}>{t.comentario}</p>}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* SOLICITAR INFORMACION */}
-          <div style={{ background:'white', borderRadius:'14px', padding:'24px', border:'1px solid #F0F0F0' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'14px' }}>
-              <p style={{ fontSize:'14px', fontWeight:700, color:'#0F2447', margin:0 }}>Solicitar informacion faltante</p>
+          {/* SOLICITAR INFO */}
+          <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
+              <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:0 }}>Solicitar informacion faltante</p>
               {emailEnviado && <span style={{ fontSize:'12px', color:'#065F46', fontWeight:600 }}>✓ Email enviado</span>}
             </div>
             {!mostrarEmailForm ? (
               <button onClick={() => setMostrarEmailForm(true)}
-                style={{ background:'#FFF5F5', color:'#E8321A', border:'1px solid #FCA5A5', padding:'10px 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
+                style={{ background:'#FFF5F5', color:'#E8321A', border:'1px solid #FCA5A5', padding:'9px 16px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
                 Pedir documentos al solicitante →
               </button>
             ) : (
               <div>
-                <p style={{ fontSize:'12px', color:'#888', margin:'0 0 10px' }}>
-                  Se enviara un email a <strong>{solicitud.correo||'sin correo'}</strong> con la lista de documentos faltantes.
-                </p>
-                <textarea
-                  value={docsFaltantes}
-                  onChange={e => setDocsFaltantes(e.target.value)}
-                  placeholder="Ej: Acta constitutiva, identificacion oficial del representante legal, comprobante de domicilio..."
-                  style={{ width:'100%', height:'100px', padding:'10px 14px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'13px', outline:'none', color:'#0F2447', resize:'vertical', boxSizing:'border-box' as any, fontFamily:'sans-serif', marginBottom:'10px' }}
-                />
+                <p style={{ fontSize:'12px', color:'#888', margin:'0 0 8px' }}>Email para: <strong>{solicitud.correo||'sin correo'}</strong></p>
+                <textarea value={docsFaltantes} onChange={e => setDocsFaltantes(e.target.value)}
+                  placeholder="Ej: Acta constitutiva, identificacion oficial del representante legal..."
+                  style={{ width:'100%', height:'90px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'13px', outline:'none', color:'#0F2447', resize:'vertical', boxSizing:'border-box' as any, fontFamily:'sans-serif', marginBottom:'8px' }} />
                 <div style={{ display:'flex', gap:'8px' }}>
                   <button onClick={enviarEmailFaltantes} disabled={enviandoEmail || !docsFaltantes.trim()}
-                    style={{ background:'#0F2447', color:'white', border:'none', padding:'10px 20px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', opacity:(!docsFaltantes.trim()||enviandoEmail)?0.5:1 }}>
-                    {enviandoEmail ? 'Enviando...' : 'Enviar email'}
+                    style={{ background:'#0F2447', color:'white', border:'none', padding:'9px 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', opacity:(!docsFaltantes.trim()||enviandoEmail)?0.5:1 }}>
+                    {enviandoEmail?'Enviando...':'Enviar'}
                   </button>
                   <button onClick={() => setMostrarEmailForm(false)}
-                    style={{ background:'white', color:'#888', border:'1px solid #E8E8E8', padding:'10px 20px', borderRadius:'8px', fontSize:'13px', cursor:'pointer' }}>
+                    style={{ background:'white', color:'#888', border:'1px solid #E8E8E8', padding:'9px 16px', borderRadius:'8px', fontSize:'13px', cursor:'pointer' }}>
                     Cancelar
                   </button>
                 </div>
@@ -246,41 +278,36 @@ export default function SolicitudDetalle() {
         </div>
 
         {/* COLUMNA DERECHA */}
-        <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
-
-          {/* ESTADO */}
+        <div style={{ display:'flex', flexDirection:'column', gap:'14px', position:'sticky' as any, top:'24px' }}>
           <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
-            <div style={{ background:estadoColor[solicitud.estado]?.bg||'#F8F8F8', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px' }}>
-              <p style={{ fontSize:'10px', color:'#888', margin:'0 0 3px' }}>Estado actual</p>
-              <p style={{ fontSize:'14px', fontWeight:700, color:estadoColor[solicitud.estado]?.color||'#888', margin:'0 0 3px' }}>{solicitud.estado}</p>
+            <div style={{ background:estadoColor[solicitud.estado]?.bg||'#F8F8F8', borderRadius:'10px', padding:'12px', marginBottom:'14px' }}>
+              <p style={{ fontSize:'10px', color:'#888', margin:'0 0 2px' }}>Estado actual</p>
+              <p style={{ fontSize:'14px', fontWeight:700, color:estadoColor[solicitud.estado]?.color||'#888', margin:'0 0 2px' }}>{solicitud.estado}</p>
               <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{estadoDescripcion[solicitud.estado]||''}</p>
             </div>
             <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 8px' }}>Mover a</p>
             <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
               {estados.filter(e => e !== solicitud.estado).map((e,i) => (
                 <button key={i} onClick={() => cambiarEstado(e)} disabled={actualizando}
-                  style={{ background:'white', color:'#0F2447', border:'1px solid #E8E8E8', padding:'9px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:600, cursor:'pointer', textAlign:'left' as any, opacity:actualizando?0.6:1 }}>
+                  style={{ background:'white', color:'#0F2447', border:'1px solid #E8E8E8', padding:'8px 12px', borderRadius:'8px', fontSize:'12px', fontWeight:600, cursor:'pointer', textAlign:'left' as any, opacity:actualizando?0.6:1 }}>
                   {e} →
                 </button>
               ))}
             </div>
-            {actualizando && <p style={{ color:'#888', fontSize:'11px', margin:'8px 0 0' }}>Guardando...</p>}
           </div>
-
-          {/* ACCIONES */}
           <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
             <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 10px' }}>Ir a</p>
             <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
               <button onClick={() => window.location.href=`/dashboard/expediente?buscar=${solicitud.id}`}
-                style={{ background:'#0F2447', color:'white', border:'none', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', width:'100%' }}>
+                style={{ background:'#0F2447', color:'white', border:'none', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
                 Ver expediente →
               </button>
               <button onClick={() => window.location.href=`/dashboard/editor?id=${solicitud.id}`}
-                style={{ background:'white', color:'#0F2447', border:'1px solid #E8E8E8', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', width:'100%' }}>
+                style={{ background:'white', color:'#0F2447', border:'1px solid #E8E8E8', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
                 Abrir en editor →
               </button>
               <button onClick={() => window.location.href=`/dashboard/negociacion?id=${solicitud.id}`}
-                style={{ background:'white', color:'#7C3AED', border:'1px solid #E8E8E8', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', width:'100%' }}>
+                style={{ background:'white', color:'#7C3AED', border:'1px solid #E8E8E8', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
                 Ver negociacion →
               </button>
             </div>
