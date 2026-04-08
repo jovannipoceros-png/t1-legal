@@ -39,6 +39,10 @@ export default function Negociacion() {
   const abrirSolicitud = async (s: any) => {
     setSeleccionada(s)
     setTab('mesa')
+    if (s.estado === 'En revision') {
+      await actualizarEstado(s.id, 'En negociacion')
+      setSeleccionada({ ...s, estado: 'En negociacion' })
+    }
     const t = await obtenerTracking(s.id)
     setTracking(t||[])
     const estadoInicial: Record<string,EstadoClausula> = {}
