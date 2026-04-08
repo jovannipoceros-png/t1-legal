@@ -163,10 +163,11 @@ export default function Monitor() {
             { label: 'Proximos a vencer', val: proximas.length, color: '#F59E0B', bg: '#FFFBEB', filtro:'proximas' },
             { label: 'Sin movimiento', val: sinMovimiento.length, color: '#888', bg: '#F8F8F8', filtro:'sinMovimiento' },
             { label: 'Contratos extranjeros', val: internacionales.length, color: '#1D4ED8', bg: '#EFF6FF', filtro:'internacionales' },
-          ].map((k, i) => (
-            <div key={i} style={{ background: k.bg, borderRadius: '10px', padding: '16px', border: `1px solid ${k.color}20` }}>
-              <p style={{ fontSize: '30px', fontWeight: 700, color: k.color, margin: '0 0 4px' }}>{cargando ? '...' : k.val}</p>
-              <p style={{ fontSize: '12px', color: '#888', margin: 0 }}>{k.label}</p>
+          ].map((k: any, i: number) => (
+            <div key={i} onClick={() => { setFiltroActivo(filtroActivo === k.filtro ? null : k.filtro); setTab('alertas') }}
+              style={{ background: filtroActivo===k.filtro ? k.color : k.bg, borderRadius: '10px', padding: '16px', border: `2px solid ${filtroActivo===k.filtro ? k.color : k.color+'20'}`, cursor: 'pointer' }}>
+              <p style={{ fontSize: '30px', fontWeight: 700, color: filtroActivo===k.filtro ? 'white' : k.color, margin: '0 0 4px' }}>{cargando ? '...' : k.val}</p>
+              <p style={{ fontSize: '12px', color: filtroActivo===k.filtro ? 'rgba(255,255,255,0.8)' : '#888', margin: 0 }}>{k.label}</p>
             </div>
           ))}
         </div>
