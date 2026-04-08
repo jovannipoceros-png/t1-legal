@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes, guardarFirmanteCatalogo, buscarFirmantesCatalogo } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes, guardarFirmanteCatalogo, buscarFirmantesCatalogo, actualizarEstado } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
   const [busqueda, setBusqueda] = useState('')
@@ -44,6 +44,10 @@ export default function Expediente() {
   }
 
   const abrirExpediente = async (s: any) => {
+    if (s.estado === 'Pendiente') {
+      await actualizarEstado(s.id, 'En revision')
+      s = { ...s, estado: 'En revision' }
+    }
     setExpediente(s)
     setResultados([])
     setCarpetaAbierta(null)
