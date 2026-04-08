@@ -45,7 +45,7 @@ export default function ExpedienteDetalle() {
     if (!archivo) return
     setSubiendo(true)
     try {
-      await subirDocumento(id, carpeta, archivo)
+      await subirDocumento(id, archivo)
       await cargar()
     } catch(e) { alert('Error al subir documento') }
     setSubiendo(false)
