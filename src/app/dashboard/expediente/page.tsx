@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes, guardarFirmanteCatalogo, buscarFirmantesCatalogo } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
@@ -23,6 +24,18 @@ export default function Expediente() {
   const [nEmpresa, setNEmpresa] = useState('')
   const [guardandoFirma, setGuardandoFirma] = useState(false)
   const [sugerencias, setSugerencias] = useState<any[]>([])
+
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const id = searchParams.get('id')
+    if (id) {
+      setBusqueda(id)
+      setTimeout(() => {
+        const btn = document.getElementById('btn-buscar')
+        if (btn) btn.click()
+      }, 300)
+    }
+  }, [])
 
   const buscar = async () => {
     if (!busqueda.trim()) return
@@ -161,7 +174,7 @@ export default function Expediente() {
       <p style={{ color:'#888', margin:'0 0 24px' }}>Busca por ID, empresa o nombre del solicitante</p>
 
       <div style={{ display:'flex', gap:'10px', marginBottom:'24px' }}>
-        <input value={busqueda} onChange={e => setBusqueda(e.target.value)} onKeyDown={e => e.key==='Enter' && buscar()}
+        <input value={busqueda} onChange={e => setBusqueda(e.target.value)} onKeyDown={e => e.key==='Enter' && buscar()} id="input-buscar"
           placeholder="Buscar por ID, empresa o nombre..."
           style={{ flex:1, padding:'12px 16px', borderRadius:'10px', border:'1.5px solid #E8E8E8', fontSize:'14px', outline:'none', color:'#0F2447' }} />
         <button onClick={buscar} disabled={buscando}
