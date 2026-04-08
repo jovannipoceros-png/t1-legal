@@ -9,6 +9,7 @@ export default function Solicitudes() {
   const [cargando, setCargando] = useState(true)
   const [actualizando, setActualizando] = useState<string|null>(null)
   const [seleccionada, setSeleccionada] = useState<any>(null)
+  const irA = (id: string) => window.location.href = `/dashboard/solicitudes/${id}`
 
   const cargar = async () => {
     const data = await obtenerSolicitudes()
@@ -100,7 +101,7 @@ export default function Solicitudes() {
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
               {filtradas.map((s,i) => (
-                <div key={i} onClick={() => setSeleccionada(s)}
+                <div key={i} onClick={() => irA(s.id)}
                   style={{ borderRadius:'12px', border:`1.5px solid ${seleccionada?.id===s.id?'#0F2447':'#F0F0F0'}`, padding:'14px 18px', background:seleccionada?.id===s.id?'#F8F9FF':'white', borderLeft:`4px solid ${s.flujo==='A'?'#F59E0B':'#1D4ED8'}`, cursor:'pointer' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'8px' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
