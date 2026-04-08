@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { obtenerSolicitudes, actualizarEstado } from '@/lib/supabase/solicitudes'
 
 export default function Solicitudes() {
@@ -9,12 +8,6 @@ export default function Solicitudes() {
   const [busqueda, setBusqueda] = useState('')
   const [cargando, setCargando] = useState(true)
   const [actualizando, setActualizando] = useState<string|null>(null)
-
-  const searchParams = useSearchParams()
-  useEffect(() => {
-    const id = searchParams.get('id')
-    if (id) setBusqueda(id)
-  }, [])
 
   const cargar = async () => {
     const data = await obtenerSolicitudes()

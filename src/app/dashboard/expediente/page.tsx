@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, Suspense } from 'next/navigation'
 import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, cerrarExpediente, subirDocumento, crearFirma, obtenerFirma, actualizarFirmantes, guardarFirmanteCatalogo, buscarFirmantesCatalogo } from '@/lib/supabase/solicitudes'
 
 export default function Expediente() {
@@ -24,18 +24,6 @@ export default function Expediente() {
   const [nEmpresa, setNEmpresa] = useState('')
   const [guardandoFirma, setGuardandoFirma] = useState(false)
   const [sugerencias, setSugerencias] = useState<any[]>([])
-
-  const searchParams = useSearchParams()
-  useEffect(() => {
-    const id = searchParams.get('id')
-    if (id) {
-      setBusqueda(id)
-      setTimeout(() => {
-        const btn = document.getElementById('btn-buscar')
-        if (btn) btn.click()
-      }, 300)
-    }
-  }, [])
 
   const buscar = async () => {
     if (!busqueda.trim()) return
