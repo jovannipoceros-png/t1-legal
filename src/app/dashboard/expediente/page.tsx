@@ -6,11 +6,6 @@ import { obtenerSolicitudes, obtenerTracking, obtenerDocumentos, obtenerUrlDocum
 export default function Expediente() {
   const [busqueda, setBusqueda] = useState('')
 
-  useEffect(() => {
-    if (idDesdeUrl) {
-      setTimeout(() => buscar(), 500)
-    }
-  }, [])
   const [expediente, setExpediente] = useState<any>(null)
   const [tracking, setTracking] = useState<any[]>([])
   const [documentos, setDocumentos] = useState<any[]>([])
