@@ -15,6 +15,7 @@ export default function SolicitudDetalle() {
   const [enviandoEmail, setEnviandoEmail] = useState(false)
   const [emailEnviado, setEmailEnviado] = useState(false)
   const [docsFaltantes, setDocsFaltantes] = useState('')
+  const [preguntas, setPreguntas] = useState('')
   const [mostrarEmailForm, setMostrarEmailForm] = useState(false)
 
   useEffect(() => { cargar() }, [id])
@@ -58,7 +59,14 @@ export default function SolicitudDetalle() {
       await fetch('/api/notificaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'documentos_faltantes', correo: solicitud.correo, nombre: solicitud.nombre || 'Solicitante', id, documentos_faltantes: docsFaltantes })
+        body: JSON.stringify({
+          tipo: 'documentos_faltantes',
+          correo: solicitud.correo,
+          nombre: solicitud.nombre || 'Solicitante',
+          id,
+          documentos_faltantes: docsFaltantes,
+          preguntas: preguntas.split('\n').filter((p: string) => p.trim())
+        })
       })
       setEmailEnviado(true)
       setDocsFaltantes('')
@@ -259,9 +267,14 @@ export default function SolicitudDetalle() {
             ) : (
               <div>
                 <p style={{ fontSize:'12px', color:'#888', margin:'0 0 8px' }}>Email para: <strong>{solicitud.correo||'sin correo'}</strong></p>
+                <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 6px' }}>Documentos faltantes</p>
                 <textarea value={docsFaltantes} onChange={e => setDocsFaltantes(e.target.value)}
-                  placeholder="Ej: Acta constitutiva, identificacion oficial del representante legal..."
+                  placeholder="Un documento por linea. Ej:\nActa constitutiva\nIdentificacion oficial\nPoder notarial"
                   style={{ width:'100%', height:'90px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'13px', outline:'none', color:'#0F2447', resize:'vertical', boxSizing:'border-box' as any, fontFamily:'sans-serif', marginBottom:'8px' }} />
+                <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'8px 0 6px' }}>Preguntas (opcional)</p>
+                <textarea value={preguntas} onChange={e => setPreguntas(e.target.value)}
+                  placeholder="Una pregunta por linea. Ej:\n¿Cual es el plazo de vigencia?\n¿Cual es el monto acordado?"
+                  style={{ width:'100%', height:'70px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'12px', outline:'none', color:'#0F2447', resize:'vertical', boxSizing:'border-box' as any, fontFamily:'sans-serif', marginBottom:'8px' }} />
                 <div style={{ display:'flex', gap:'8px' }}>
                   <button onClick={enviarEmailFaltantes} disabled={enviandoEmail || !docsFaltantes.trim()}
                     style={{ background:'#0F2447', color:'white', border:'none', padding:'9px 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', opacity:(!docsFaltantes.trim()||enviandoEmail)?0.5:1 }}>
