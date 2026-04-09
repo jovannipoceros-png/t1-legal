@@ -31,8 +31,7 @@ export async function POST(req: NextRequest) {
       `
     } else if (tipo === 'documentos_faltantes') {
       const { documentos_faltantes, preguntas, id: expId } = JSON.parse(JSON.stringify({ documentos_faltantes: req, preguntas: [], id: id }))
-      const docs = (documentos_faltantes || '').split('
-').filter((d: string) => d.trim())
+      const docs = (documentos_faltantes || '').split('\n').filter((d: string) => d.trim())
       const pregs = (Array.isArray(preguntas) ? preguntas : [])
       const baseUrl = 'https://t1-legal.vercel.app/solicitar/completar/' + id
       const docsParam = docs.join('|')
