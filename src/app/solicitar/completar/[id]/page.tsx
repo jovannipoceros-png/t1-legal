@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { obtenerSolicitudes, subirDocumento } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, subirDocumento, actualizarEstado } from '@/lib/supabase/solicitudes'
 
 export default function CompletarSolicitud() {
   const params = useParams()
@@ -12,16 +12,17 @@ export default function CompletarSolicitud() {
   const [enviando, setEnviando] = useState(false)
   const [docsSubidos, setDocsSubidos] = useState<Record<string,File|null>>({})
   const [respuestas, setRespuestas] = useState<Record<string,string>>({})
-  const [solicitudData, setSolicitudData] = useState<{documentos:string[], preguntas:string[]}>({ documentos:[], preguntas:[] })
+  const [docs, setDocs] = useState<string[]>([])
+  const [pregs, setPregs] = useState<string[]>([])
 
   useEffect(() => {
     const cargar = async () => {
       try {
         const params_url = new URLSearchParams(window.location.search)
-        const docsParam = params_url.get('docs')
-        const preguntasParam = params_url.get('preguntas')
-        if (docsParam) setSolicitudData(prev => ({ ...prev, documentos: docsParam.split('|').filter(Boolean) }))
-        if (preguntasParam) setSolicitudData(prev => ({ ...prev, preguntas: preguntasParam.split('|').filter(Boolean) }))
+        const docsParam = params_url.get('docs') || ''
+        const preguntasParam = params_url.get('preguntas') || ''
+        setDocs(docsParam.split('|').filter(Boolean))
+        setPregs(preguntasParam.split('|').filter(Boolean))
         const data = await obtenerSolicitudes()
         const encontrada = (data||[]).find((s:any) => s.id === id)
         setSolicitud(encontrada || null)
@@ -35,30 +36,36 @@ export default function CompletarSolicitud() {
     setDocsSubidos(prev => ({ ...prev, [docNombre]: file }))
   }
 
-  const handleRespuesta = (pregunta: string, valor: string) => {
-    setRespuestas(prev => ({ ...prev, [pregunta]: valor }))
-  }
-
   const enviar = async () => {
     setEnviando(true)
     try {
       for (const [nombre, file] of Object.entries(docsSubidos)) {
         if (file) await subirDocumento(id, file)
       }
-      await fetch('/api/completar', {
+
+      const docsSubidosLista = Object.keys(docsSubidos).filter(k => docsSubidos[k])
+      const docsPendientes = docs.filter(d => !docsSubidos[d])
+      const preguntasSinResponder = pregs.filter(p => !respuestas[p]?.trim())
+
+      const res = await fetch('/api/completar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
           nombre: solicitud?.nombre || 'Solicitante',
-          docsSubidos: Object.keys(docsSubidos).filter(k => docsSubidos[k]),
-          docsPendientes: solicitudData.documentos.filter(d => !docsSubidos[d]),
+          correo: solicitud?.correo || '',
+          docsSubidos: docsSubidosLista,
+          docsPendientes,
           respuestas,
-          preguntasSinResponder: solicitudData.preguntas.filter(p => !respuestas[p]?.trim())
+          preguntasSinResponder
         })
       })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
       setEnviado(true)
-    } catch(e) { alert('Error al enviar') }
+    } catch(e: any) {
+      alert('Error al enviar: ' + e.message)
+    }
     setEnviando(false)
   }
 
@@ -82,10 +89,10 @@ export default function CompletarSolicitud() {
         <p style={{ color:'#888', fontSize:'13px', margin:'0 0 20px' }}>El area legal recibio tus documentos y respuestas. Te notificaremos cuando avance tu solicitud.</p>
         <div style={{ background:'#F8F8F8', borderRadius:'10px', padding:'14px', textAlign:'left', marginBottom:'16px' }}>
           <p style={{ fontSize:'12px', color:'#555', margin:'0 0 4px' }}>Expediente: <strong style={{ color:'#0F2447' }}>{id}</strong></p>
-          <p style={{ fontSize:'12px', color:'#555', margin:'0 0 4px' }}>Documentos subidos: <strong style={{ color:'#0F2447' }}>{Object.values(docsSubidos).filter(Boolean).length} de {solicitudData.documentos.length}</strong></p>
-          <p style={{ fontSize:'12px', color:'#555', margin:0 }}>Preguntas respondidas: <strong style={{ color:'#0F2447' }}>{Object.values(respuestas).filter(v=>v.trim()).length} de {solicitudData.preguntas.length}</strong></p>
+          <p style={{ fontSize:'12px', color:'#555', margin:'0 0 4px' }}>Documentos subidos: <strong style={{ color:'#0F2447' }}>{Object.values(docsSubidos).filter(Boolean).length} de {docs.length}</strong></p>
+          <p style={{ fontSize:'12px', color:'#555', margin:0 }}>Preguntas respondidas: <strong style={{ color:'#0F2447' }}>{Object.values(respuestas).filter(v=>v.trim()).length} de {pregs.length}</strong></p>
         </div>
-        <p style={{ fontSize:'12px', color:'#888' }}>Puedes regresar a esta pagina en cualquier momento para completar lo que falta.</p>
+        <p style={{ fontSize:'12px', color:'#888' }}>Puedes regresar a esta pagina para completar lo que falta.</p>
       </div>
     </div>
   )
@@ -103,29 +110,34 @@ export default function CompletarSolicitud() {
           <span style={{ fontSize:'13px', color:'#0F2447', fontWeight:600 }}>{solicitud.nombre_empresa || solicitud.nombre || 'Sin nombre'} — {solicitud.tipo_solicitud}</span>
         </div>
 
-        {solicitudData.documentos.length > 0 && (
+        {docs.length > 0 && (
           <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0', marginBottom:'16px' }}>
             <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 4px' }}>Documentos solicitados</h3>
-            <p style={{ color:'#888', fontSize:'12px', margin:'0 0 16px' }}>Sube cada documento. Se guardaran directo en tu expediente.</p>
-            {solicitudData.documentos.map((doc, i) => (
-              <div key={i} style={{ border:'1px solid #F0F0F0', borderRadius:'10px', padding:'12px', marginBottom:'8px', background:'#FAFAFA' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px' }}>
-                  <span style={{ fontSize:'13px', fontWeight:600, color:'#0F2447' }}>{doc}</span>
+            <p style={{ color:'#888', fontSize:'12px', margin:'0 0 16px' }}>Sube cada documento en su espacio. Se guardaran directo en tu expediente.</p>
+            {docs.map((doc, i) => (
+              <div key={i} style={{ border:'1px solid #F0F0F0', borderRadius:'10px', padding:'14px', marginBottom:'10px', background:'#FAFAFA' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                    <span style={{ background:'#0F2447', color:'white', fontSize:'10px', fontWeight:700, width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{i+1}</span>
+                    <span style={{ fontSize:'13px', fontWeight:600, color:'#0F2447' }}>{doc}</span>
+                  </div>
                   {docsSubidos[doc] ? (
-                    <span style={{ background:'#F0FDF4', color:'#065F46', fontSize:'10px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>Subido</span>
+                    <span style={{ background:'#F0FDF4', color:'#065F46', fontSize:'10px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>Subido ✓</span>
                   ) : (
                     <span style={{ background:'#FFF5F5', color:'#991B1B', fontSize:'10px', fontWeight:700, padding:'2px 8px', borderRadius:'10px' }}>Pendiente</span>
                   )}
                 </div>
                 {docsSubidos[doc] ? (
                   <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 10px', background:'#F0FDF4', borderRadius:'8px' }}>
-                    <span style={{ fontSize:'14px' }}>✓</span>
-                    <span style={{ fontSize:'12px', color:'#065F46' }}>{docsSubidos[doc]?.name}</span>
-                    <button onClick={() => handleSubir(doc, null)} style={{ background:'none', border:'none', color:'#888', cursor:'pointer', fontSize:'11px', marginLeft:'auto' }}>Cambiar</button>
+                    <span style={{ fontSize:'14px' }}>📄</span>
+                    <span style={{ fontSize:'12px', color:'#065F46', flex:1 }}>{docsSubidos[doc]?.name}</span>
+                    <button onClick={() => handleSubir(doc, null)} style={{ background:'none', border:'none', color:'#888', cursor:'pointer', fontSize:'11px' }}>Cambiar</button>
                   </div>
                 ) : (
-                  <label style={{ display:'block', border:'1px dashed #E8E8E8', borderRadius:'8px', padding:'12px', textAlign:'center', cursor:'pointer', background:'white' }}>
-                    <p style={{ color:'#888', fontSize:'12px', margin:0 }}>Haz clic para subir o arrastra el archivo aqui</p>
+                  <label style={{ display:'block', border:'1.5px dashed #E8E8E8', borderRadius:'8px', padding:'16px', textAlign:'center', cursor:'pointer', background:'white' }}>
+                    <div style={{ fontSize:'24px', marginBottom:'6px' }}>📎</div>
+                    <p style={{ color:'#0F2447', fontWeight:600, fontSize:'13px', margin:'0 0 2px' }}>Haz clic para subir</p>
+                    <p style={{ color:'#888', fontSize:'11px', margin:0 }}>PDF, Word, Excel, imagenes y mas</p>
                     <input type="file" style={{ display:'none' }} onChange={e => handleSubir(doc, e.target.files?.[0] || null)} />
                   </label>
                 )}
@@ -134,18 +146,21 @@ export default function CompletarSolicitud() {
           </div>
         )}
 
-        {solicitudData.preguntas.length > 0 && (
+        {pregs.length > 0 && (
           <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0', marginBottom:'16px' }}>
             <h3 style={{ color:'#0F2447', fontSize:'14px', fontWeight:700, margin:'0 0 4px' }}>Preguntas del area legal</h3>
-            <p style={{ color:'#888', fontSize:'12px', margin:'0 0 16px' }}>Responde cada pregunta. Las respuestas se guardan en tu expediente.</p>
-            {solicitudData.preguntas.map((preg, i) => (
-              <div key={i} style={{ border:'1px solid #F0F0F0', borderRadius:'10px', padding:'12px', marginBottom:'8px', background:'#FAFAFA' }}>
-                <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:'0 0 8px' }}>{preg}</p>
+            <p style={{ color:'#888', fontSize:'12px', margin:'0 0 16px' }}>Responde cada pregunta para continuar con tu solicitud.</p>
+            {pregs.map((preg, i) => (
+              <div key={i} style={{ border:'1px solid #F0F0F0', borderRadius:'10px', padding:'14px', marginBottom:'10px', background:'#FAFAFA' }}>
+                <div style={{ display:'flex', alignItems:'flex-start', gap:'8px', marginBottom:'10px' }}>
+                  <span style={{ background:'#1D4ED8', color:'white', fontSize:'10px', fontWeight:700, width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'1px' }}>{i+1}</span>
+                  <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:0 }}>{preg}</p>
+                </div>
                 <textarea
                   value={respuestas[preg] || ''}
-                  onChange={e => handleRespuesta(preg, e.target.value)}
+                  onChange={e => setRespuestas(prev => ({ ...prev, [preg]: e.target.value }))}
                   placeholder="Escribe tu respuesta aqui..."
-                  style={{ width:'100%', padding:'10px', borderRadius:'8px', border:'1px solid #E8E8E8', fontSize:'12px', color:'#0F2447', resize:'vertical', outline:'none', fontFamily:'sans-serif', minHeight:'60px', boxSizing:'border-box' as any }}
+                  style={{ width:'100%', padding:'10px', borderRadius:'8px', border:`1.5px solid ${respuestas[preg]?.trim()?'#22C55E':'#E8E8E8'}`, fontSize:'12px', color:'#0F2447', resize:'vertical', outline:'none', fontFamily:'sans-serif', minHeight:'60px', boxSizing:'border-box' as any }}
                 />
               </div>
             ))}
@@ -153,12 +168,12 @@ export default function CompletarSolicitud() {
         )}
 
         <div style={{ background:'#FFF5F5', borderRadius:'10px', padding:'12px 16px', marginBottom:'16px', border:'1px solid #FFD0CC' }}>
-          <p style={{ fontSize:'12px', color:'#C42A15', margin:0 }}>Documentos almacenados de forma segura. Solo el area legal de T1 tiene acceso.</p>
+          <p style={{ fontSize:'12px', color:'#C42A15', margin:0 }}>🔒 Documentos almacenados de forma segura. Solo el area legal de T1 tiene acceso.</p>
         </div>
 
         <button onClick={enviar} disabled={enviando}
-          style={{ width:'100%', background:'#0F2447', color:'white', border:'none', padding:'13px', borderRadius:'10px', fontSize:'14px', fontWeight:700, cursor:'pointer', opacity:enviando?0.7:1 }}>
-          {enviando ? 'Enviando...' : 'Enviar al area legal'}
+          style={{ width:'100%', background:'#0F2447', color:'white', border:'none', padding:'14px', borderRadius:'10px', fontSize:'14px', fontWeight:700, cursor:enviando?'not-allowed':'pointer', opacity:enviando?0.7:1 }}>
+          {enviando ? 'Enviando...' : 'Enviar al area legal →'}
         </button>
       </div>
     </div>
