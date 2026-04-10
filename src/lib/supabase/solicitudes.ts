@@ -192,3 +192,39 @@ export async function buscarFirmantesCatalogo(query: string) {
   const { data } = await supabase.from('firmantes_catalogo').select('*').ilike('nombre', `%${query}%`).limit(5)
   return data || []
 }
+
+export async function crearNotificacion(solicitud_id: string, correo_destinatario: string, tipo: string, mensaje: string, datos?: any) {
+  const { data, error } = await supabase
+    .from('notificaciones')
+    .insert([{ solicitud_id, correo_destinatario, tipo, mensaje, datos }])
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function obtenerNotificaciones(correo: string) {
+  const { data, error } = await supabase
+    .from('notificaciones')
+    .select('*')
+    .eq('correo_destinatario', correo)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function marcarNotificacionLeida(id: string) {
+  const { error } = await supabase
+    .from('notificaciones')
+    .update({ leida: true })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function marcarTodasLeidas(correo: string) {
+  const { error } = await supabase
+    .from('notificaciones')
+    .update({ leida: true })
+    .eq('correo_destinatario', correo)
+  if (error) throw error
+}

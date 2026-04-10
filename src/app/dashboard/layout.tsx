@@ -50,6 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div style={{ marginLeft:'220px', flex:1, minHeight:'100vh' }}>
         <div style={{ background:'white', borderBottom:'1px solid #F0F0F0', padding:'0 32px', height:'56px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:10 }}>
           <p style={{ color:'#0F2447', fontSize:'13px', margin:0, fontWeight:500 }}>T1 Legal — Sistema de Gestion Legal</p>
+          <div style={{ marginLeft:'auto', paddingRight:'16px' }}><Notificaciones correo="jovanni.poceros@t1.com" /></div>
           <a href="/admin-login" style={{ color:'#888', fontSize:'12px', textDecoration:'none', padding:'6px 14px', border:'1px solid #E8E8E8', borderRadius:'6px' }}>Cerrar sesion</a>
         </div>
         {children}

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { obtenerSolicitudes, actualizarEstado, obtenerTracking, obtenerDocumentos } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, actualizarEstado, obtenerTracking, obtenerDocumentos, crearNotificacion } from '@/lib/supabase/solicitudes'
 
 export default function SolicitudDetalle() {
   const params = useParams()
@@ -68,8 +68,17 @@ export default function SolicitudDetalle() {
           preguntas: preguntas.split('\n').filter((p: string) => p.trim())
         })
       })
+      const docs = docsFaltantes.split('\n').filter((d: string) => d.trim())
+      const pregs = preguntas.split('\n').filter((p: string) => p.trim())
+      const link = `/solicitar/completar/${id}?docs=${encodeURIComponent(docs.join('|'))}&preguntas=${encodeURIComponent(pregs.join('|'))}`
+      const mensaje = `El area legal requiere informacion adicional para tu solicitud. ${docs.length > 0 ? `Documentos: ${docs.join(', ')}. ` : ''}${pregs.length > 0 ? `Preguntas: ${pregs.join(', ')}.` : ''}`
+      await crearNotificacion(id, solicitud.correo, 'documentos_faltantes', mensaje, { link, docs, preguntas: pregs })
+      if (solicitud.lider_correo) {
+        await crearNotificacion(id, solicitud.lider_correo, 'documentos_faltantes', `Tu colaborador necesita entregar informacion para la solicitud ${id}`, { link, docs, preguntas: pregs })
+      }
       setEmailEnviado(true)
       setDocsFaltantes('')
+      setPreguntas('')
       setMostrarEmailForm(false)
       setTimeout(() => setEmailEnviado(false), 4000)
     } catch(e) { alert('Error al enviar') }
