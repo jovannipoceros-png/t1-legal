@@ -1,3 +1,4 @@
+import Notificaciones from '@/components/Notificaciones'
 import Link from 'next/link'
 
 const modulos = [
