@@ -9,6 +9,7 @@ export default function SolicitudDetalle() {
   const id = params.id as string
   const [solicitud, setSolicitud] = useState<any>(null)
   const [tracking, setTracking] = useState<any[]>([])
+  const [trackingExpandido, setTrackingExpandido] = useState<Record<number,boolean>>({})
   const [documentos, setDocumentos] = useState<any[]>([])
   const [cargando, setCargando] = useState(true)
   const [actualizando, setActualizando] = useState(false)
@@ -40,7 +41,7 @@ export default function SolicitudDetalle() {
     try {
       const url = await obtenerUrlDocumento(id, doc.name)
       window.open(url, '_blank')
-    } catch(e) { alert('No se pudo abrir el documento') }
+    } catch(e) { alert('No se pudo ver el documento') }
   }
 
   const cambiarEstado = async (estado: string) => {
@@ -259,10 +260,16 @@ export default function SolicitudDetalle() {
                 <button onClick={async () => {
                   try {
                     const url = await obtenerUrlDocumento(id, doc.name)
+                    const resp = await fetch(url)
+                    const blob = await resp.blob()
+                    const blobUrl = URL.createObjectURL(blob)
                     const a = document.createElement('a')
-                    a.href = url
+                    a.href = blobUrl
                     a.download = doc.name
+                    document.body.appendChild(a)
                     a.click()
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(blobUrl)
                   } catch(e) { alert('Error al descargar') }
                 }}
                   style={{ background:'white', color:'#0F2447', border:'1px solid #E8E8E8', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>Descargar</button>
@@ -275,12 +282,33 @@ export default function SolicitudDetalle() {
             <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
               <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 14px' }}>Historial de cambios</p>
               {tracking.map((t,i) => (
-                <div key={i} style={{ display:'flex', gap:'12px', paddingBottom:'12px', marginBottom:'12px', borderBottom:i<tracking.length-1?'1px solid #F0F0F0':'none' }}>
-                  <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#0F2447', flexShrink:0, marginTop:'5px' }} />
-                  <div>
-                    <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:'0 0 2px' }}>{t.estado_nuevo || t.accion || 'Cambio de estado'}</p>
-                    <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
-                    {t.comentario && <p style={{ fontSize:'12px', color:'#555', margin:'3px 0 0', fontStyle:'italic' }}>{t.comentario}</p>}
+                <div key={i} style={{ paddingBottom:'12px', marginBottom:'12px', borderBottom:i<tracking.length-1?'1px solid #F0F0F0':'none' }}>
+                  <div style={{ display:'flex', gap:'12px', alignItems:'flex-start' }}>
+                    <div style={{ width:'7px', height:'7px', borderRadius:'50%', background: t.estado_nuevo==='Informacion recibida'?'#065F46': t.comentario?.includes('Solicitud de informacion')?'#1D4ED8':'#0F2447', flexShrink:0, marginTop:'5px' }} />
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:'0 0 2px' }}>{t.estado_nuevo || t.accion || 'Cambio de estado'}</p>
+                        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                          <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+                          {t.comentario && (
+                            <button onClick={() => setTrackingExpandido(prev => ({...prev, [i]: !prev[i]}))}
+                              style={{ background:'none', border:'none', color:'#1D4ED8', cursor:'pointer', fontSize:'11px', fontWeight:600, padding:0 }}>
+                              {trackingExpandido[i] ? 'Ocultar ▲' : 'Ver detalle ▼'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {t.comentario && trackingExpandido[i] && (
+                        <div style={{ marginTop:'8px', background: t.estado_nuevo==='Informacion recibida'?'#F0FDF4': t.comentario?.includes('Solicitud de informacion')?'#EFF6FF':'#F8F8F8', borderRadius:'8px', padding:'10px 14px', border: t.estado_nuevo==='Informacion recibida'?'1px solid #BBF7D0': t.comentario?.includes('Solicitud de informacion')?'1px solid #BFDBFE':'1px solid #F0F0F0' }}>
+                          {t.comentario.split('. ').map((linea: string, j: number) => linea.trim() && (
+                            <p key={j} style={{ fontSize:'12px', color:'#0F2447', margin:'0 0 4px', lineHeight:1.5 }}>
+                              {linea.includes('Documentos pedidos:') || linea.includes('Documentos subidos:') ? '📄 ' : linea.includes('Preguntas:') || linea.includes('Respuestas:') ? '❓ ' : '• '}
+                              {linea}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
