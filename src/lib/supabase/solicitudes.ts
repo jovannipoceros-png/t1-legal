@@ -194,16 +194,15 @@ export async function buscarFirmantesCatalogo(query: string) {
 }
 
 export async function crearNotificacion(solicitud_id: string, correo_destinatario: string, tipo: string, mensaje: string, datos?: any) {
-  const { data, error } = await supabase
+  const supabase = createClient()
+  const { error } = await supabase
     .from('notificaciones')
     .insert([{ solicitud_id, correo_destinatario, tipo, mensaje, datos }])
-    .select()
-    .single()
   if (error) throw error
-  return data
 }
 
 export async function obtenerNotificaciones(correo: string) {
+  const supabase = createClient()
   const { data, error } = await supabase
     .from('notificaciones')
     .select('*')
@@ -214,6 +213,7 @@ export async function obtenerNotificaciones(correo: string) {
 }
 
 export async function marcarNotificacionLeida(id: string) {
+  const supabase = createClient()
   const { error } = await supabase
     .from('notificaciones')
     .update({ leida: true })
@@ -222,6 +222,7 @@ export async function marcarNotificacionLeida(id: string) {
 }
 
 export async function marcarTodasLeidas(correo: string) {
+  const supabase = createClient()
   const { error } = await supabase
     .from('notificaciones')
     .update({ leida: true })
