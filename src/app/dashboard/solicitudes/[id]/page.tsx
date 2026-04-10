@@ -253,7 +253,7 @@ export default function SolicitudDetalle() {
             ) : documentos.map((doc,i) => (
               <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'9px 12px', background:'#F8F8F8', borderRadius:'8px', marginBottom:'5px' }}>
                 <span style={{ fontSize:'14px' }}>📄</span>
-                <span style={{ flex:1, fontSize:'12px', color:'#0F2447' }}>{doc.name}</span>
+                <span style={{ flex:1, fontSize:'12px', color:'#0F2447' }}>{doc.name.replace(/^\d+_/, '')}</span>
                 <span style={{ fontSize:'11px', color:'#888', marginRight:'8px' }}>{doc.carpeta}</span>
                 <button onClick={() => verDocumento(doc)}
                   style={{ background:'#0F2447', color:'white', border:'none', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer', marginRight:'4px' }}>Ver</button>
@@ -279,43 +279,58 @@ export default function SolicitudDetalle() {
 
           {/* HISTORIAL */}
           {tracking.length > 0 && (
-            <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
-              <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 14px' }}>Historial de cambios</p>
-              {tracking.map((t,i) => (
-                <div key={i} style={{ paddingBottom:'12px', marginBottom:'12px', borderBottom:i<tracking.length-1?'1px solid #F0F0F0':'none' }}>
-                  <div style={{ display:'flex', gap:'12px', alignItems:'flex-start' }}>
-                    <div style={{ width:'7px', height:'7px', borderRadius:'50%', background: t.estado_nuevo==='Informacion recibida'?'#065F46': t.comentario?.includes('Solicitud de informacion')?'#1D4ED8':'#0F2447', flexShrink:0, marginTop:'5px' }} />
-                    <div style={{ flex:1 }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                        <p style={{ fontSize:'13px', fontWeight:600, color:'#0F2447', margin:'0 0 2px' }}>{t.estado_nuevo || t.accion || 'Cambio de estado'}</p>
-                        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                          <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
-                          {t.comentario && (
-                            <button onClick={() => setTrackingExpandido(prev => ({...prev, [i]: !prev[i]}))}
-                              style={{ background:'none', border:'none', color:'#1D4ED8', cursor:'pointer', fontSize:'11px', fontWeight:600, padding:0 }}>
+            <div style={{ background:'white', borderRadius:'14px', padding:'24px', border:'1px solid #F0F0F0' }}>
+              <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 20px' }}>Expediente cronologico</p>
+              <div style={{ position:'relative' as any }}>
+                <div style={{ position:'absolute' as any, left:'14px', top:0, bottom:0, width:'2px', background:'#F0F0F0', zIndex:0 }} />
+                {tracking.map((t: any, i: number) => {
+                  const esInfoEnviada = t.comentario?.includes('Solicitud de informacion enviada')
+                  const esInfoRecibida = t.estado_nuevo === 'Informacion recibida'
+                  const esCerrado = t.estado_nuevo === 'Cerrado'
+                  const esNegociacion = t.estado_nuevo === 'En negociacion'
+                  const esRevision = t.estado_nuevo === 'En revision'
+                  const esFirma = t.estado_nuevo === 'Lista para firma'
+                  const color = esInfoRecibida?'#065F46':esInfoEnviada?'#1D4ED8':esCerrado?'#166534':esNegociacion?'#7C3AED':esFirma?'#065F46':esRevision?'#1D4ED8':'#0F2447'
+                  const bg = esInfoRecibida?'#F0FDF4':esInfoEnviada?'#EFF6FF':esCerrado?'#F0FDF4':esNegociacion?'#F3E8FF':esFirma?'#ECFDF5':esRevision?'#EFF6FF':'#F8F8F8'
+                  const border = esInfoRecibida?'#BBF7D0':esInfoEnviada?'#BFDBFE':esCerrado?'#BBF7D0':esNegociacion?'#DDD6FE':esFirma?'#6EE7B7':esRevision?'#BFDBFE':'#E8E8E8'
+                  const icono = esInfoRecibida?'📥':esInfoEnviada?'📤':esCerrado?'✅':esNegociacion?'🤝':esFirma?'✍️':esRevision?'🔍':'📋'
+                  return (
+                    <div key={i} style={{ display:'flex', gap:'14px', marginBottom:'12px', position:'relative' as any, zIndex:1 }}>
+                      <div style={{ width:'30px', height:'30px', borderRadius:'50%', background:color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', flexShrink:0, border:`2px solid white`, boxShadow:`0 0 0 2px ${color}` }}>
+                        {icono}
+                      </div>
+                      <div style={{ flex:1, background:bg, borderRadius:'10px', padding:'12px 14px', border:`1px solid ${border}` }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'4px' }}>
+                          <p style={{ fontSize:'13px', fontWeight:700, color, margin:0 }}>{t.estado_nuevo || t.accion || 'Cambio de estado'}</p>
+                          <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+                        </div>
+                        {t.comentario && (
+                          <div>
+                            <button onClick={() => setTrackingExpandido((prev: any) => ({...prev, [i]: !prev[i]}))}
+                              style={{ background:'none', border:'none', color, cursor:'pointer', fontSize:'11px', fontWeight:600, padding:0 }}>
                               {trackingExpandido[i] ? 'Ocultar ▲' : 'Ver detalle ▼'}
                             </button>
-                          )}
-                        </div>
+                            {trackingExpandido[i] && (
+                              <div style={{ borderTop:`1px solid ${border}`, paddingTop:'8px', marginTop:'6px' }}>
+                                {t.comentario.split('. ').filter((l:string) => l.trim()).map((linea:string, j:number) => (
+                                  <p key={j} style={{ fontSize:'12px', color:'#0F2447', margin:'0 0 4px', lineHeight:1.5 }}>
+                                    {linea.includes('Documentos pedidos') || linea.includes('Documentos subidos') ? '📄 ' : linea.includes('Preguntas') || linea.includes('Respuestas') ? '❓ ' : linea.includes('Pendientes') ? '⏳ ' : '• '}
+                                    {linea.trim()}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {t.comentario && trackingExpandido[i] && (
-                        <div style={{ marginTop:'8px', background: t.estado_nuevo==='Informacion recibida'?'#F0FDF4': t.comentario?.includes('Solicitud de informacion')?'#EFF6FF':'#F8F8F8', borderRadius:'8px', padding:'10px 14px', border: t.estado_nuevo==='Informacion recibida'?'1px solid #BBF7D0': t.comentario?.includes('Solicitud de informacion')?'1px solid #BFDBFE':'1px solid #F0F0F0' }}>
-                          {t.comentario.split('. ').map((linea: string, j: number) => linea.trim() && (
-                            <p key={j} style={{ fontSize:'12px', color:'#0F2447', margin:'0 0 4px', lineHeight:1.5 }}>
-                              {linea.includes('Documentos pedidos:') || linea.includes('Documentos subidos:') ? '📄 ' : linea.includes('Preguntas:') || linea.includes('Respuestas:') ? '❓ ' : '• '}
-                              {linea}
-                            </p>
-                          ))}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </div>
-              ))}
+                  )
+                })}
+              </div>
             </div>
           )}
 
-          {/* SOLICITAR INFO */}
+                    {/* SOLICITAR INFO */}
           <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
               <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:0 }}>Solicitar informacion faltante</p>
