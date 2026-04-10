@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { obtenerSolicitudes, actualizarEstado, obtenerTracking, obtenerDocumentos, crearNotificacion } from '@/lib/supabase/solicitudes'
+import { obtenerSolicitudes, actualizarEstado, obtenerTracking, obtenerDocumentos, obtenerUrlDocumento, crearNotificacion } from '@/lib/supabase/solicitudes'
 
 export default function SolicitudDetalle() {
   const params = useParams()
@@ -34,6 +34,13 @@ export default function SolicitudDetalle() {
       setDocumentos(docs || [])
     } catch(e) { console.error(e) }
     setCargando(false)
+  }
+
+  const verDocumento = async (doc: any) => {
+    try {
+      const url = await obtenerUrlDocumento(id, doc.nombre)
+      window.open(url, '_blank')
+    } catch(e) { alert('No se pudo abrir el documento') }
   }
 
   const cambiarEstado = async (estado: string) => {
@@ -240,7 +247,9 @@ export default function SolicitudDetalle() {
               <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'9px 12px', background:'#F8F8F8', borderRadius:'8px', marginBottom:'5px' }}>
                 <span style={{ fontSize:'14px' }}>📄</span>
                 <span style={{ flex:1, fontSize:'12px', color:'#0F2447' }}>{doc.nombre}</span>
-                <span style={{ fontSize:'11px', color:'#888' }}>{doc.carpeta}</span>
+                <span style={{ fontSize:'11px', color:'#888', marginRight:'8px' }}>{doc.carpeta}</span>
+                <button onClick={() => verDocumento(doc)}
+                  style={{ background:'#0F2447', color:'white', border:'none', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>Ver</button>
               </div>
             ))}
           </div>

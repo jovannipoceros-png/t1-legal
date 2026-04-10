@@ -16,20 +16,27 @@ export default function CompletarSolicitud() {
   const [pregs, setPregs] = useState<string[]>([])
 
   useEffect(() => {
+    let mounted = true
     const cargar = async () => {
       try {
+        if (docs.length > 0 || pregs.length > 0) return
         const params_url = new URLSearchParams(window.location.search)
         const docsParam = params_url.get('docs') || ''
         const preguntasParam = params_url.get('preguntas') || ''
-        setDocs(docsParam.split('|').filter(Boolean))
-        setPregs(preguntasParam.split('|').filter(Boolean))
+        const docsArr = docsParam.split('|').filter(Boolean)
+        const pregsArr = preguntasParam.split('|').filter(Boolean)
+        if (mounted) {
+          setDocs(docsArr)
+          setPregs(pregsArr)
+        }
         const data = await obtenerSolicitudes()
         const encontrada = (data||[]).find((s:any) => s.id === id)
         setSolicitud(encontrada || null)
       } catch(e) { console.error(e) }
-      setCargando(false)
+      if (mounted) setCargando(false)
     }
     cargar()
+    return () => { mounted = false }
   }, [id])
 
   const handleSubir = (docNombre: string, file: File | null) => {

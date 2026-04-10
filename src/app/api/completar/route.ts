@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { id, nombre, docsSubidos, docsPendientes, respuestas, preguntasSinResponder } = await req.json()
+    const { id, nombre, correo, docsSubidos, docsPendientes, respuestas, preguntasSinResponder } = await req.json()
     const key = process.env.RESEND_API_KEY
     const admin = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'jovanni.poceros@t1.com'
     if (!key) return NextResponse.json({ error: 'API key no configurada' })
@@ -58,6 +58,22 @@ export async function POST(req: NextRequest) {
         </div>
       </div>
     `
+
+    // Notificacion interna a Jovanni
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const docsSubidosLista = docsSubidos || []
+      const respuestasObj = respuestas || {}
+      const resumen = `${nombre} respondio. Docs: ${docsSubidosLista.join(', ')||'ninguno'}. Respuestas: ${Object.entries(respuestasObj).map(([p,r]) => `${p}: ${r}`).join(', ')||'ninguna'}`
+      await sb.from('notificaciones').insert([{
+        solicitud_id: id,
+        correo_destinatario: 'jovanni.poceros@t1.com',
+        tipo: 'respuesta_recibida',
+        mensaje: resumen,
+        datos: { link: `/dashboard/solicitudes/${id}`, docsSubidos: docsSubidosLista, respuestas: respuestasObj, docsPendientes, preguntasSinResponder }
+      }])
+    } catch(e) { console.error('Error notif interna:', e) }
 
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
