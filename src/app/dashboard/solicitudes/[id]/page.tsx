@@ -14,8 +14,8 @@ export default function SolicitudDetalle() {
   const [actualizando, setActualizando] = useState(false)
   const [enviandoEmail, setEnviandoEmail] = useState(false)
   const [emailEnviado, setEmailEnviado] = useState(false)
-  const [docsFaltantes, setDocsFaltantes] = useState('')
-  const [preguntas, setPreguntas] = useState('')
+  const [docsFaltantes, setDocsFaltantes] = useState<string[]>([])
+  const [preguntas, setPreguntas] = useState<string[]>([])
   const [mostrarEmailForm, setMostrarEmailForm] = useState(false)
 
   useEffect(() => { cargar() }, [id])
@@ -53,7 +53,7 @@ export default function SolicitudDetalle() {
   }
 
   const enviarEmailFaltantes = async () => {
-    if (!docsFaltantes.trim() || !solicitud?.correo) return
+    if (docsFaltantes.filter(d=>d.trim()).length === 0) return
     setEnviandoEmail(true)
     try {
       await fetch('/api/notificaciones', {
@@ -64,12 +64,12 @@ export default function SolicitudDetalle() {
           correo: solicitud.correo,
           nombre: solicitud.nombre || 'Solicitante',
           id,
-          documentos_faltantes: docsFaltantes,
-          preguntas: preguntas.split('\n').filter((p: string) => p.trim())
+          documentos_faltantes: docsFaltantes.filter((d:string) => d.trim()).join('\n'),
+          preguntas: preguntas.filter((p:string) => p.trim())
         })
       })
-      const docs = docsFaltantes.split('\n').filter((d: string) => d.trim())
-      const pregs = preguntas.split('\n').filter((p: string) => p.trim())
+      const docs = docsFaltantes.filter((d: string) => d.trim())
+      const pregs = preguntas.filter((p: string) => p.trim())
       const link = `/solicitar/completar/${id}?docs=${encodeURIComponent(docs.join('|'))}&preguntas=${encodeURIComponent(pregs.join('|'))}`
       const mensaje = `El area legal requiere informacion adicional para tu solicitud. ${docs.length > 0 ? `Documentos: ${docs.join(', ')}. ` : ''}${pregs.length > 0 ? `Preguntas: ${pregs.join(', ')}.` : ''}`
       await crearNotificacion(id, solicitud.correo, 'documentos_faltantes', mensaje, { link, docs, preguntas: pregs })
@@ -77,8 +77,8 @@ export default function SolicitudDetalle() {
         await crearNotificacion(id, solicitud.lider_correo, 'documentos_faltantes', `Tu colaborador necesita entregar informacion para la solicitud ${id}`, { link, docs, preguntas: pregs })
       }
       setEmailEnviado(true)
-      setDocsFaltantes('')
-      setPreguntas('')
+      setDocsFaltantes([])
+      setPreguntas([])
       setMostrarEmailForm(false)
       setTimeout(() => setEmailEnviado(false), 4000)
     } catch(e) { alert('Error al enviar') }
@@ -277,16 +277,38 @@ export default function SolicitudDetalle() {
               <div>
                 <p style={{ fontSize:'12px', color:'#888', margin:'0 0 8px' }}>Email para: <strong>{solicitud.correo||'sin correo'}</strong></p>
                 <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 6px' }}>Documentos faltantes</p>
-                <textarea value={docsFaltantes} onChange={e => setDocsFaltantes(e.target.value)}
-                  placeholder="Un documento por linea. Ej:\nActa constitutiva\nIdentificacion oficial\nPoder notarial"
-                  style={{ width:'100%', height:'90px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'13px', outline:'none', color:'#0F2447', resize:'vertical', boxSizing:'border-box' as any, fontFamily:'sans-serif', marginBottom:'8px' }} />
-                <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'8px 0 6px' }}>Preguntas (opcional)</p>
-                <textarea value={preguntas} onChange={e => setPreguntas(e.target.value)}
-                  placeholder="Una pregunta por linea. Ej:\n¿Cual es el plazo de vigencia?\n¿Cual es el monto acordado?"
-                  style={{ width:'100%', height:'70px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'12px', outline:'none', color:'#0F2447', resize:'vertical', boxSizing:'border-box' as any, fontFamily:'sans-serif', marginBottom:'8px' }} />
+                {docsFaltantes.map((doc, i) => (
+                  <div key={i} style={{ display:'flex', gap:'6px', marginBottom:'6px', alignItems:'center' }}>
+                    <span style={{ background:'#0F2447', color:'white', fontSize:'10px', fontWeight:700, width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{i+1}</span>
+                    <input value={doc} onChange={e => setDocsFaltantes(prev => prev.map((d,j) => j===i ? e.target.value : d))}
+                      placeholder="Ej: Acta constitutiva"
+                      style={{ flex:1, padding:'8px 12px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'12px', outline:'none', color:'#0F2447' }} />
+                    <button onClick={() => setDocsFaltantes(prev => prev.filter((_,j) => j!==i))}
+                      style={{ background:'none', border:'none', color:'#aaa', cursor:'pointer', fontSize:'16px' }}>✕</button>
+                  </div>
+                ))}
+                <button onClick={() => setDocsFaltantes(prev => [...prev, ''])}
+                  style={{ background:'#F8F8F8', border:'1px dashed #E8E8E8', color:'#0F2447', padding:'7px 14px', borderRadius:'8px', fontSize:'12px', cursor:'pointer', marginBottom:'14px', width:'100%' }}>
+                  + Agregar documento
+                </button>
+                <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 8px' }}>Preguntas (opcional)</p>
+                {preguntas.map((preg, i) => (
+                  <div key={i} style={{ display:'flex', gap:'6px', marginBottom:'6px', alignItems:'center' }}>
+                    <span style={{ background:'#1D4ED8', color:'white', fontSize:'10px', fontWeight:700, width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{i+1}</span>
+                    <input value={preg} onChange={e => setPreguntas(prev => prev.map((p,j) => j===i ? e.target.value : p))}
+                      placeholder="Ej: ¿Cual es el plazo de vigencia?"
+                      style={{ flex:1, padding:'8px 12px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'12px', outline:'none', color:'#0F2447' }} />
+                    <button onClick={() => setPreguntas(prev => prev.filter((_,j) => j!==i))}
+                      style={{ background:'none', border:'none', color:'#aaa', cursor:'pointer', fontSize:'16px' }}>✕</button>
+                  </div>
+                ))}
+                <button onClick={() => setPreguntas(prev => [...prev, ''])}
+                  style={{ background:'#F0F7FF', border:'1px dashed #BFDBFE', color:'#1D4ED8', padding:'7px 14px', borderRadius:'8px', fontSize:'12px', cursor:'pointer', marginBottom:'8px', width:'100%' }}>
+                  + Agregar pregunta
+                </button>
                 <div style={{ display:'flex', gap:'8px' }}>
-                  <button onClick={enviarEmailFaltantes} disabled={enviandoEmail || !docsFaltantes.trim()}
-                    style={{ background:'#0F2447', color:'white', border:'none', padding:'9px 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', opacity:(!docsFaltantes.trim()||enviandoEmail)?0.5:1 }}>
+                  <button onClick={enviarEmailFaltantes} disabled={enviandoEmail || docsFaltantes.filter(d=>d.trim()).length===0}
+                    style={{ background:'#0F2447', color:'white', border:'none', padding:'9px 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', opacity:(docsFaltantes.filter((d:string)=>d.trim()).length===0||enviandoEmail)?0.5:1 }}>
                     {enviandoEmail?'Enviando...':'Enviar'}
                   </button>
                   <button onClick={() => setMostrarEmailForm(false)}
