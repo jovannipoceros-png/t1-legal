@@ -38,7 +38,7 @@ export default function SolicitudDetalle() {
 
   const verDocumento = async (doc: any) => {
     try {
-      const url = await obtenerUrlDocumento(id, doc.nombre)
+      const url = await obtenerUrlDocumento(id, doc.name)
       window.open(url, '_blank')
     } catch(e) { alert('No se pudo abrir el documento') }
   }
@@ -80,6 +80,12 @@ export default function SolicitudDetalle() {
       const link = `/solicitar/completar/${id}?docs=${encodeURIComponent(docs.join('|'))}&preguntas=${encodeURIComponent(pregs.join('|'))}`
       const mensaje = `El area legal requiere informacion adicional para tu solicitud. ${docs.length > 0 ? `Documentos: ${docs.join(', ')}. ` : ''}${pregs.length > 0 ? `Preguntas: ${pregs.join(', ')}.` : ''}`
       await crearNotificacion(id, solicitud.correo, 'documentos_faltantes', mensaje, { link, docs, preguntas: pregs })
+      // Registrar en tracking
+      const trackingMsg = `Solicitud de informacion enviada. Documentos pedidos: ${docs.join(', ')}${pregs.length > 0 ? `. Preguntas: ${pregs.join(', ')}` : ''}`
+      try {
+        const { agregarTracking } = await import('@/lib/supabase/solicitudes')
+        await agregarTracking(id, solicitud.estado, trackingMsg)
+      } catch(e) {}
       if (solicitud.lider_correo) {
         await crearNotificacion(id, solicitud.lider_correo, 'documentos_faltantes', `Tu colaborador necesita entregar informacion para la solicitud ${id}`, { link, docs, preguntas: pregs })
       }
@@ -246,10 +252,20 @@ export default function SolicitudDetalle() {
             ) : documentos.map((doc,i) => (
               <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'9px 12px', background:'#F8F8F8', borderRadius:'8px', marginBottom:'5px' }}>
                 <span style={{ fontSize:'14px' }}>📄</span>
-                <span style={{ flex:1, fontSize:'12px', color:'#0F2447' }}>{doc.nombre}</span>
+                <span style={{ flex:1, fontSize:'12px', color:'#0F2447' }}>{doc.name}</span>
                 <span style={{ fontSize:'11px', color:'#888', marginRight:'8px' }}>{doc.carpeta}</span>
                 <button onClick={() => verDocumento(doc)}
-                  style={{ background:'#0F2447', color:'white', border:'none', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>Ver</button>
+                  style={{ background:'#0F2447', color:'white', border:'none', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer', marginRight:'4px' }}>Ver</button>
+                <button onClick={async () => {
+                  try {
+                    const url = await obtenerUrlDocumento(id, doc.name)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = doc.name
+                    a.click()
+                  } catch(e) { alert('Error al descargar') }
+                }}
+                  style={{ background:'white', color:'#0F2447', border:'1px solid #E8E8E8', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>Descargar</button>
               </div>
             ))}
           </div>

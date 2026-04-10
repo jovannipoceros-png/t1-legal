@@ -65,13 +65,20 @@ export async function POST(req: NextRequest) {
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
       const docsSubidosLista = docsSubidos || []
       const respuestasObj = respuestas || {}
-      const resumen = `${nombre} respondio. Docs: ${docsSubidosLista.join(', ')||'ninguno'}. Respuestas: ${Object.entries(respuestasObj).map(([p,r]) => `${p}: ${r}`).join(', ')||'ninguna'}`
+      const resumen = `${nombre} respondio. Docs: ${docsSubidosLista.join(', ')||'ninguno'}. Respuestas: ${Object.entries(respuestasObj).map(([p,r]:any) => `${p}: ${r}`).join(', ')||'ninguna'}`
       await sb.from('notificaciones').insert([{
         solicitud_id: id,
         correo_destinatario: 'jovanni.poceros@t1.com',
         tipo: 'respuesta_recibida',
         mensaje: resumen,
         datos: { link: `/dashboard/solicitudes/${id}`, docsSubidos: docsSubidosLista, respuestas: respuestasObj, docsPendientes, preguntasSinResponder }
+      }])
+      // Tracking de respuesta
+      const trackingMsg = `Solicitante respondio. Documentos subidos: ${docsSubidosLista.join(', ')||'ninguno'}${docsPendientes?.length > 0 ? `. Pendientes: ${docsPendientes.join(', ')}` : ''}. Respuestas: ${Object.entries(respuestasObj).map(([p,r]:any) => `${p} → ${r}`).join(' | ')||'ninguna'}`
+      await sb.from('tracking').insert([{
+        solicitud_id: id,
+        estado_nuevo: 'Informacion recibida',
+        comentario: trackingMsg
       }])
     } catch(e) { console.error('Error notif interna:', e) }
 
