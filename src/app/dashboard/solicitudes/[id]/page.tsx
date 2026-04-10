@@ -81,7 +81,7 @@ export default function SolicitudDetalle() {
       setPreguntas([])
       setMostrarEmailForm(false)
       setTimeout(() => setEmailEnviado(false), 4000)
-    } catch(e) { alert('Error al enviar') }
+    } catch(e: any) { alert('Error: ' + (e?.message || JSON.stringify(e))) }
     setEnviandoEmail(false)
   }
 
