@@ -285,11 +285,11 @@ export default function SolicitudDetalle() {
                 <div style={{ position:'absolute' as any, left:'14px', top:0, bottom:0, width:'2px', background:'#F0F0F0', zIndex:0 }} />
                 {tracking.map((t: any, i: number) => {
                   const esInfoEnviada = t.comentario?.includes('Solicitud de informacion enviada')
-                  const esInfoRecibida = t.estado_nuevo === 'Informacion recibida'
-                  const esCerrado = t.estado_nuevo === 'Cerrado'
-                  const esNegociacion = t.estado_nuevo === 'En negociacion'
-                  const esRevision = t.estado_nuevo === 'En revision'
-                  const esFirma = t.estado_nuevo === 'Lista para firma'
+                  const esInfoRecibida = t.estado === 'Informacion recibida'
+                  const esCerrado = t.estado === 'Cerrado'
+                  const esNegociacion = t.estado === 'En negociacion'
+                  const esRevision = t.estado === 'En revision'
+                  const esFirma = t.estado === 'Lista para firma'
                   const color = esInfoRecibida?'#065F46':esInfoEnviada?'#1D4ED8':esCerrado?'#166534':esNegociacion?'#7C3AED':esFirma?'#065F46':esRevision?'#1D4ED8':'#0F2447'
                   const bg = esInfoRecibida?'#F0FDF4':esInfoEnviada?'#EFF6FF':esCerrado?'#F0FDF4':esNegociacion?'#F3E8FF':esFirma?'#ECFDF5':esRevision?'#EFF6FF':'#F8F8F8'
                   const border = esInfoRecibida?'#BBF7D0':esInfoEnviada?'#BFDBFE':esCerrado?'#BBF7D0':esNegociacion?'#DDD6FE':esFirma?'#6EE7B7':esRevision?'#BFDBFE':'#E8E8E8'
@@ -301,10 +301,10 @@ export default function SolicitudDetalle() {
                       </div>
                       <div style={{ flex:1, background:bg, borderRadius:'10px', padding:'12px 14px', border:`1px solid ${border}` }}>
                         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'4px' }}>
-                          <p style={{ fontSize:'13px', fontWeight:700, color, margin:0 }}>{t.estado_nuevo || t.accion || 'Cambio de estado'}</p>
+                          <p style={{ fontSize:'13px', fontWeight:700, color, margin:0 }}>{t.estado || t.accion || 'Cambio de estado'}</p>
                           <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
                         </div>
-                        {t.comentario && (
+                        {t.nota && (
                           <div>
                             <button onClick={() => setTrackingExpandido((prev: any) => ({...prev, [i]: !prev[i]}))}
                               style={{ background:'none', border:'none', color, cursor:'pointer', fontSize:'11px', fontWeight:600, padding:0 }}>
@@ -312,7 +312,7 @@ export default function SolicitudDetalle() {
                             </button>
                             {trackingExpandido[i] && (
                               <div style={{ borderTop:`1px solid ${border}`, paddingTop:'8px', marginTop:'6px' }}>
-                                {t.comentario.split('. ').filter((l:string) => l.trim()).map((linea:string, j:number) => (
+                                {t.nota.split('. ').filter((l:string) => l.trim()).map((linea:string, j:number) => (
                                   <p key={j} style={{ fontSize:'12px', color:'#0F2447', margin:'0 0 4px', lineHeight:1.5 }}>
                                     {linea.includes('Documentos pedidos') || linea.includes('Documentos subidos') ? '📄 ' : linea.includes('Preguntas') || linea.includes('Respuestas') ? '❓ ' : linea.includes('Pendientes') ? '⏳ ' : '• '}
                                     {linea.trim()}
