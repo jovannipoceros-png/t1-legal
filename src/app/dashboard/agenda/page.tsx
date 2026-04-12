@@ -186,8 +186,8 @@ export default function Agenda() {
       const infoRecibida = t.filter((x:any) => x.estado === 'Informacion recibida')
       const retornos = t.filter((x:any) => x.estado?.includes('Retorno') || x.nota?.includes('Retorno'))
 
-      const activas2 = sols.filter((s:any) => s.estado !== 'Cerrado')
-      const cerradas2 = sols.filter((s:any) => s.estado === 'Cerrado')
+      const activas2 = solicitudes.filter((s:any) => s.estado !== 'Cerrado')
+      const cerradas2 = solicitudes.filter((s:any) => s.estado === 'Cerrado')
       const t1activas = activas2.filter((s:any) => s.empresa_t1 === 'T1.com')
       const claroActivas = activas2.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
       const urgentes2 = activas2.filter((s:any) => s.prioridad === 'Alta')
