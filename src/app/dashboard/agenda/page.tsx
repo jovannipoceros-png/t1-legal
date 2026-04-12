@@ -259,6 +259,13 @@ export default function Agenda() {
     setGenerando(false)
   }
 
+  const activas = solicitudes.filter((s:any) => s.estado !== 'Cerrado')
+  const cerradas = solicitudes.filter((s:any) => s.estado === 'Cerrado')
+  const urgentes = activas.filter((s:any) => s.prioridad === 'Alta')
+  const oblVencidas = obligaciones.filter((o:any) => Math.ceil((new Date(o.fecha_limite).getTime() - new Date().getTime()) / (1000*60*60*24)) < 0)
+  const oblProximas = obligaciones.filter((o:any) => { const d = Math.ceil((new Date(o.fecha_limite).getTime() - new Date().getTime()) / (1000*60*60*24)); return d >= 0 && d <= 7 })
+  const temperatura = urgentes.length > 2 ? '🔴 Día crítico' : urgentes.length > 0 ? '🟡 Día activo' : '🟢 Día tranquilo'
+
   if (cargando) return <div style={{ padding:'32px', fontFamily:'sans-serif', color:'#888' }}>Cargando...</div>
 
   return (
