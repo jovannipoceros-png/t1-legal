@@ -296,57 +296,102 @@ export default function SolicitudDetalle() {
           </div>
 
           {/* HISTORIAL */}
-          {tracking.length > 0 && (
-            <div style={{ background:'white', borderRadius:'14px', padding:'24px', border:'1px solid #F0F0F0' }}>
-              <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 20px' }}>Expediente cronologico</p>
-              <div style={{ position:'relative' as any }}>
-                <div style={{ position:'absolute' as any, left:'14px', top:0, bottom:0, width:'2px', background:'#F0F0F0', zIndex:0 }} />
-                {tracking.map((t: any, i: number) => {
-                  const esInfoEnviada = t.comentario?.includes('Solicitud de informacion enviada')
-                  const esInfoRecibida = t.estado === 'Informacion recibida'
-                  const esCerrado = t.estado === 'Cerrado'
-                  const esNegociacion = t.estado === 'En negociacion'
-                  const esRevision = t.estado === 'En revision'
-                  const esFirma = t.estado === 'Lista para firma'
-                  const color = esInfoRecibida?'#065F46':esInfoEnviada?'#1D4ED8':esCerrado?'#166534':esNegociacion?'#7C3AED':esFirma?'#065F46':esRevision?'#1D4ED8':'#0F2447'
-                  const bg = esInfoRecibida?'#F0FDF4':esInfoEnviada?'#EFF6FF':esCerrado?'#F0FDF4':esNegociacion?'#F3E8FF':esFirma?'#ECFDF5':esRevision?'#EFF6FF':'#F8F8F8'
-                  const border = esInfoRecibida?'#BBF7D0':esInfoEnviada?'#BFDBFE':esCerrado?'#BBF7D0':esNegociacion?'#DDD6FE':esFirma?'#6EE7B7':esRevision?'#BFDBFE':'#E8E8E8'
-                  const icono = esInfoRecibida?'📥':esInfoEnviada?'📤':esCerrado?'✅':esNegociacion?'🤝':esFirma?'✍️':esRevision?'🔍':'📋'
-                  return (
-                    <div key={i} style={{ display:'flex', gap:'14px', marginBottom:'12px', position:'relative' as any, zIndex:1 }}>
-                      <div style={{ width:'30px', height:'30px', borderRadius:'50%', background:color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', flexShrink:0, border:`2px solid white`, boxShadow:`0 0 0 2px ${color}` }}>
-                        {icono}
-                      </div>
-                      <div style={{ flex:1, background:bg, borderRadius:'10px', padding:'12px 14px', border:`1px solid ${border}` }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'4px' }}>
-                          <p style={{ fontSize:'13px', fontWeight:700, color, margin:0 }}>{t.estado || t.accion || 'Cambio de estado'}</p>
-                          <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+          <div style={{ background:'white', borderRadius:'14px', padding:'24px', border:'1px solid #F0F0F0' }}>
+            <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 20px' }}>Expediente cronologico</p>
+            {(() => {
+              const ordenEtapas = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
+              const configEtapa: Record<string,any> = {
+                'Pendiente':        { label:'Solicitud recibida',  icono:'📋', color:'#0F2447', bg:'#F8F8F8',  border:'#E8E8E8' },
+                'En revision':      { label:'En revision',         icono:'🔍', color:'#1D4ED8', bg:'#EFF6FF',  border:'#BFDBFE' },
+                'En negociacion':   { label:'En negociacion',      icono:'🤝', color:'#7C3AED', bg:'#F3E8FF',  border:'#DDD6FE' },
+                'Lista para firma': { label:'Lista para firma',    icono:'✍️', color:'#065F46', bg:'#ECFDF5',  border:'#6EE7B7' },
+                'Cerrado':          { label:'Cerrado',             icono:'✅', color:'#166534', bg:'#F0FDF4',  border:'#BBF7D0' },
+              }
+              const estadoActual = solicitud.estado
+              const idxActual = ordenEtapas.indexOf(estadoActual)
+              const etapasVistas = ordenEtapas.slice(0, idxActual + 1)
+
+              return (
+                <div style={{ position:'relative' as any }}>
+                  <div style={{ position:'absolute' as any, left:'15px', top:0, bottom:0, width:'2px', background:'#F0F0F0' }} />
+                  {etapasVistas.map((etapaKey, idx) => {
+                    const cfg = configEtapa[etapaKey]
+                    const activa = etapaKey === estadoActual
+                    const etapasRelacionadas = etapaKey === 'En revision'
+                      ? ['En revision','Solicitud de informacion enviada','Informacion recibida']
+                      : [etapaKey]
+                    const eventosEtapa = tracking
+                      .filter((t:any) => etapasRelacionadas.includes(t.estado))
+                      .sort((a:any,b:any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                      .filter((t:any, i:number, arr:any[]) => {
+                        if (t.estado !== 'En revision') return true
+                        return i === arr.findIndex((x:any) => x.estado === 'En revision')
+                      })
+                    const fechaInicio = eventosEtapa.length > 0
+                      ? new Date(eventosEtapa[0].created_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
+                      : '—'
+                    const esRetorno = tracking.filter((t:any) => t.estado?.includes('Retorno') && t.nota?.includes(etapaKey)).length > 0
+                    return (
+                      <div key={idx} style={{ display:'flex', gap:'14px', marginBottom:'16px', position:'relative' as any, zIndex:1 }}>
+                        <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:cfg.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', flexShrink:0, border:'2px solid white', boxShadow: activa?`0 0 0 3px ${cfg.color}50`:'none' }}>
+                          {cfg.icono}
                         </div>
-                        {t.nota && (
-                          <div>
-                            <button onClick={() => setTrackingExpandido((prev: any) => ({...prev, [i]: !prev[i]}))}
-                              style={{ background:'none', border:'none', color, cursor:'pointer', fontSize:'11px', fontWeight:600, padding:0 }}>
-                              {trackingExpandido[i] ? 'Ocultar ▲' : 'Ver detalle ▼'}
-                            </button>
-                            {trackingExpandido[i] && (
-                              <div style={{ borderTop:`1px solid ${border}`, paddingTop:'8px', marginTop:'6px' }}>
-                                {t.nota.split('. ').filter((l:string) => l.trim()).map((linea:string, j:number) => (
-                                  <p key={j} style={{ fontSize:'12px', color:'#0F2447', margin:'0 0 4px', lineHeight:1.5 }}>
-                                    {linea.includes('Documentos pedidos') || linea.includes('Documentos subidos') ? '📄 ' : linea.includes('Preguntas') || linea.includes('Respuestas') ? '❓ ' : linea.includes('Pendientes') ? '⏳ ' : '• '}
-                                    {linea.trim()}
-                                  </p>
-                                ))}
-                              </div>
-                            )}
+                        <div style={{ flex:1, background:cfg.bg, borderRadius:'10px', padding:'14px 16px', border:`1px solid ${cfg.border}` }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: eventosEtapa.length>0?'10px':'0' }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                              <p style={{ fontSize:'13px', fontWeight:700, color:cfg.color, margin:0 }}>{cfg.label}</p>
+                              {activa && <span style={{ fontSize:'10px', background:cfg.color, color:'white', padding:'2px 8px', borderRadius:'10px' }}>En progreso</span>}
+                              {esRetorno && <span style={{ fontSize:'10px', background:'#FEE2E2', color:'#991B1B', padding:'2px 8px', borderRadius:'10px' }}>Retorno</span>}
+                            </div>
+                            <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{fechaInicio}</p>
                           </div>
-                        )}
+                          {eventosEtapa.length > 0 && (
+                            <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                              {eventosEtapa.map((t:any, j:number) => {
+                                const esEnvio = t.estado === 'Solicitud de informacion enviada'
+                                const esRespuesta = t.estado === 'Informacion recibida'
+                                const esRetornoItem = t.estado?.includes('Retorno')
+                                const tieneDetalle = (esEnvio || esRespuesta) && t.nota
+                                const keyExp = `${idx}-${j}`
+                                return (
+                                  <div key={j} style={{ background:'white', borderRadius:'8px', padding:'10px 12px', border:`1px solid ${cfg.border}` }}>
+                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                      <p style={{ fontSize:'12px', fontWeight:600, color: esEnvio?'#1D4ED8':esRespuesta?'#065F46':esRetornoItem?'#991B1B':'#0F2447', margin:0 }}>
+                                        {esEnvio ? '📤 Se solicito informacion' : esRespuesta ? '📥 Solicitante respondio' : esRetornoItem ? `🔄 ${t.nota?.split('—')[0] || t.estado}` : `• ${t.nota?.split('.')[0] || t.estado}`}
+                                      </p>
+                                      <p style={{ fontSize:'10px', color:'#aaa', margin:0 }}>{new Date(t.created_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</p>
+                                    </div>
+                                    {tieneDetalle && (
+                                      <div style={{ marginTop:'6px' }}>
+                                        <button onClick={() => setTrackingExpandido((prev:any) => ({...prev, [keyExp]: !prev[keyExp]}))}
+                                          style={{ background:'none', border:'none', color:cfg.color, cursor:'pointer', fontSize:'11px', padding:0, fontWeight:600 }}>
+                                          {trackingExpandido[keyExp] ? 'Ocultar ▲' : 'Ver detalle ▼'}
+                                        </button>
+                                        {trackingExpandido[keyExp] && (
+                                          <div style={{ marginTop:'6px', paddingTop:'6px', borderTop:`1px solid ${cfg.border}` }}>
+                                            {t.nota.split('. ').filter((l:string) => l.trim()).map((linea:string, k:number) => (
+                                              <p key={k} style={{ fontSize:'11px', color:'#555', margin:'0 0 3px', lineHeight:1.5 }}>
+                                                {linea.includes('Documentos pedidos')||linea.includes('Documentos subidos') ? '📄 ' : linea.includes('Preguntas')||linea.includes('Respuestas') ? '❓ ' : linea.includes('Pendientes') ? '⏳ ' : '• '}
+                                                {linea.trim()}
+                                              </p>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+                    )
+                  })}
+                </div>
+              )
+            })()}
+          </div>
 
                     {/* SOLICITAR INFO */}
           <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
