@@ -194,6 +194,7 @@ export default function Agenda() {
       const t1urgentes = urgentes2.filter((s:any) => s.empresa_t1 === 'T1.com')
       const claroUrgentes = urgentes2.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
 
+      const tempStr = urgentes2.length > 2 ? 'Día crítico' : urgentes2.length > 0 ? 'Día activo' : 'Día tranquilo'
       const lineas = [
         `REPORTE DIARIO DE GESTIÓN LEGAL`,
         `T1 Pagos — Legal`,
