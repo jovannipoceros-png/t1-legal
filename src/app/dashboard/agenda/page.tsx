@@ -113,7 +113,7 @@ export default function Agenda() {
   }
 
   const exportarMinuta = () => {
-    const contenidoReal = [
+    const contenido = [
       `MINUTA LEGAL — T1 Pagos / Claro Pagos`,
       `Fecha: ${fechaVista || fechaHoy}`,
       `Elaboró: Jovanni Poceros`,
