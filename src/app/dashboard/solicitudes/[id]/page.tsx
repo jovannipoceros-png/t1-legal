@@ -310,7 +310,18 @@ export default function SolicitudDetalle() {
               }
               const estadoActual = solicitud.estado
               const idxActual = ordenEtapas.findIndex(e => norm(e) === norm(estadoActual))
-              const etapasVistas = ordenEtapas.slice(0, idxActual + 1)
+              // Mostrar etapas que tienen eventos EN TRACKING o es la etapa actual
+              const etapasConEventos = new Set(tracking.map((t:any) => {
+                const n = norm(t.estado)
+                if (n.includes('solicitud de informacion') || n.includes('informacion recibida') || n.includes('retorno a en revision') || n === 'en revision') return 'En revision'
+                if (n === 'en negociacion') return 'En negociacion'
+                if (n === 'lista para firma') return 'Lista para firma'
+                if (n === 'cerrado') return 'Cerrado'
+                if (n === 'pendiente') return 'Pendiente'
+                return null
+              }).filter(Boolean))
+              etapasConEventos.add(estadoActual)
+              const etapasVistas = ordenEtapas.filter(e => etapasConEventos.has(e))
 
               return (
                 <div style={{ position:'relative' as any }}>
