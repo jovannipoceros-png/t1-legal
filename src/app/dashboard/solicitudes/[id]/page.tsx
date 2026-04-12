@@ -300,6 +300,7 @@ export default function SolicitudDetalle() {
             <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 20px' }}>Expediente cronologico</p>
             {(() => {
               const ordenEtapas = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
+              const norm = (s:string) => s?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
               const configEtapa: Record<string,any> = {
                 'Pendiente':        { label:'Solicitud recibida',  icono:'📋', color:'#0F2447', bg:'#F8F8F8',  border:'#E8E8E8' },
                 'En revision':      { label:'En revision',         icono:'🔍', color:'#1D4ED8', bg:'#EFF6FF',  border:'#BFDBFE' },
@@ -308,7 +309,7 @@ export default function SolicitudDetalle() {
                 'Cerrado':          { label:'Cerrado',             icono:'✅', color:'#166534', bg:'#F0FDF4',  border:'#BBF7D0' },
               }
               const estadoActual = solicitud.estado
-              const idxActual = ordenEtapas.indexOf(estadoActual)
+              const idxActual = ordenEtapas.findIndex(e => norm(e) === norm(estadoActual))
               const etapasVistas = ordenEtapas.slice(0, idxActual + 1)
 
               return (
@@ -316,12 +317,12 @@ export default function SolicitudDetalle() {
                   <div style={{ position:'absolute' as any, left:'15px', top:0, bottom:0, width:'2px', background:'#F0F0F0' }} />
                   {etapasVistas.map((etapaKey, idx) => {
                     const cfg = configEtapa[etapaKey]
-                    const activa = etapaKey === estadoActual
-                    const etapasRelacionadas = etapaKey === 'En revision'
-                      ? ['En revision','Solicitud de informacion enviada','Informacion recibida']
-                      : [etapaKey]
+                    const activa = norm(etapaKey) === norm(estadoActual)
+                    const etapasRelacionadas = norm(etapaKey) === 'en revision'
+                      ? ['en revision','solicitud de informacion enviada','informacion recibida']
+                      : [norm(etapaKey)]
                     const eventosEtapa = tracking
-                      .filter((t:any) => etapasRelacionadas.includes(t.estado))
+                      .filter((t:any) => etapasRelacionadas.includes(norm(t.estado)))
                       .sort((a:any,b:any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                       .filter((t:any, i:number, arr:any[]) => {
                         if (t.estado !== 'En revision') return true
@@ -348,9 +349,9 @@ export default function SolicitudDetalle() {
                           {eventosEtapa.length > 0 && (
                             <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                               {eventosEtapa.map((t:any, j:number) => {
-                                const esEnvio = t.estado === 'Solicitud de informacion enviada'
-                                const esRespuesta = t.estado === 'Informacion recibida'
-                                const esRetornoItem = t.estado?.includes('Retorno')
+                                const esEnvio = norm(t.estado) === 'solicitud de informacion enviada'
+                                const esRespuesta = norm(t.estado) === 'informacion recibida'
+                                const esRetornoItem = t.estado?.toLowerCase().includes('retorno')
                                 const tieneDetalle = (esEnvio || esRespuesta) && t.nota
                                 const keyExp = `${idx}-${j}`
                                 return (
