@@ -40,7 +40,7 @@ export default function Agenda() {
       const [sols, obls, minutaHoy, hist]: any[] = await Promise.all([
         obtenerSolicitudes(),
         sb.from('obligaciones').select('*').order('fecha_limite', { ascending: true }),
-        sb.from('minutas').select('*').eq('fecha', fechaHoy).single().catch(() => ({ data: null })),
+        sb.from('minutas').select('*').eq('fecha', fechaHoy).maybeSingle(),
         sb.from('minutas').select('fecha, creado_por, updated_at').order('fecha', { ascending: false }).limit(30) as any
       ])
       const data = sols || []
