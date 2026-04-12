@@ -18,6 +18,9 @@ export default function Entrenamiento() {
   const [tab, setTab] = useState<'nuevo'|'historial'>('nuevo')
   const [reporte, setReporte] = useState('')
   const [generandoReporte, setGenerandoReporte] = useState(false)
+  const [busquedaContrato, setBusquedaContrato] = useState('')
+  const [modoNeg, setModoNeg] = useState<'completo'|'clausula'>('completo')
+  const [clausulasSel, setClausulasSel] = useState<string[]>([])
   const [cargando, setCargando] = useState(true)
   const chatRef = useRef<any>(null)
 
@@ -50,28 +53,29 @@ export default function Entrenamiento() {
       color: '#0F2447',
       bg: '#EFF6FF',
       border: '#BFDBFE',
-      desc: 'Tú representas a T1 Pagos. Claude toma el rol del cliente o contraparte. Practica defender los intereses de T1.',
-      tuRol: 'Tú = T1 Pagos',
+      desc: 'Tú representas a T1. Claude toma el rol del cliente o contraparte. Practica defender los intereses de T1.',
+      tuRol: 'Tú = T1',
       claudeRol: 'Claude = Contraparte / Cliente'
     },
     {
       id: 't1',
-      label: 'Claude es T1 Pagos',
+      label: 'Claude es T1',
       emoji: '⚖️',
       color: '#7C3AED',
       bg: '#F3E8FF',
       border: '#DDD6FE',
       desc: 'Tú representas al cliente o contraparte. Claude defiende los intereses de T1. Practica entender el otro lado.',
       tuRol: 'Tú = Contraparte / Cliente',
-      claudeRol: 'Claude = T1 Pagos'
+      claudeRol: 'Claude = T1'
     },
   ]
 
   const iniciarSesion = async () => {
     if (!solicitudSel || !rolClaude || !perfil) return
-    const sistemPrompt = rolClaude === 'contraparte'
-      ? `Eres la contraparte/cliente en una negociación de contrato con T1 Pagos. El contrato es: ${solicitudSel.tipo_solicitud || 'Contrato'} con ${solicitudSel.nombre_empresa || solicitudSel.nombre}. Tu perfil es ${perfil}. ${perfil === 'agresivo' ? 'Presiona constantemente, no cedas fácilmente, amenaza con buscar otro proveedor si no obtienes lo que quieres.' : perfil === 'colaborativo' ? 'Busca acuerdos razonables pero mantén firmes tus puntos clave.' : perfil === 'tecnico' ? 'Cita leyes mexicanas y jurisprudencia SCJN en cada argumento.' : 'Varía tu estilo — a veces colabora, a veces presiona.'} Responde SIEMPRE en español, de forma concisa (máximo 3 párrafos). Al final de cada mensaje incluye una táctica de negociación entre corchetes [TÁCTICA: nombre].`
-      : `Eres el representante legal de T1 Pagos en una negociación. El contrato es: ${solicitudSel.tipo_solicitud || 'Contrato'} con ${solicitudSel.nombre_empresa || solicitudSel.nombre}. Tu perfil es ${perfil}. Defiende los intereses de T1 Pagos. ${perfil === 'agresivo' ? 'Mantén posiciones firmes, no cedas en puntos clave para T1.' : perfil === 'colaborativo' ? 'Busca acuerdos pero protege los intereses de T1.' : perfil === 'tecnico' ? 'Argumenta con leyes mexicanas y jurisprudencia SCJN.' : 'Varía tu estilo según la situación.'} Responde SIEMPRE en español, de forma concisa. Al final incluye [TÁCTICA: nombre].`
+    const clausulasTexto = modoNeg === 'clausula' && clausulasSel.filter(c=>c.trim()).length > 0 ? `Las cláusulas a negociar son: ${clausulasSel.filter(c=>c.trim()).join(', ')}.` : 'Negocia el contrato completo.'
+      const sistemPrompt = rolClaude === 'contraparte'
+      ? `Eres la contraparte/cliente en una negociación de contrato con T1. El contrato es: ${solicitudSel.tipo_solicitud || 'Contrato'} con ${solicitudSel.nombre_empresa || solicitudSel.nombre}. ${clausulasTexto} Tu perfil es ${perfil}. ${perfil === 'agresivo' ? 'Presiona constantemente, no cedas fácilmente, amenaza con buscar otro proveedor si no obtienes lo que quieres.' : perfil === 'colaborativo' ? 'Busca acuerdos razonables pero mantén firmes tus puntos clave.' : perfil === 'tecnico' ? 'Cita leyes mexicanas y jurisprudencia SCJN en cada argumento.' : 'Varía tu estilo — a veces colabora, a veces presiona.'} Responde SIEMPRE en español, de forma concisa (máximo 3 párrafos). Al final de cada mensaje incluye una táctica de negociación entre corchetes [TÁCTICA: nombre].`
+      : `Eres el representante legal de T1 en una negociación. El contrato es: ${solicitudSel.tipo_solicitud || 'Contrato'} con ${solicitudSel.nombre_empresa || solicitudSel.nombre}. ${clausulasTexto} Tu perfil es ${perfil}. Defiende los intereses de T1. ${perfil === 'agresivo' ? 'Mantén posiciones firmes, no cedas en puntos clave para T1.' : perfil === 'colaborativo' ? 'Busca acuerdos pero protege los intereses de T1.' : perfil === 'tecnico' ? 'Argumenta con leyes mexicanas y jurisprudencia SCJN.' : 'Varía tu estilo según la situación.'} Responde SIEMPRE en español, de forma concisa. Al final incluye [TÁCTICA: nombre].`
 
     const mensajeInicial = rolClaude === 'contraparte'
       ? `Buenos días. He revisado el contrato ${solicitudSel.tipo_solicitud || ''} y quisiera discutir algunos puntos antes de proceder.`
@@ -258,22 +262,57 @@ export default function Entrenamiento() {
               {/* PASO 1 — CONTRATO */}
               <div style={{ marginBottom:'24px' }}>
                 <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>1. Selecciona el contrato a negociar</p>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px,1fr))', gap:'10px' }}>
-                  {solicitudes.filter(s => s.estado !== 'Cerrado').slice(0,6).map((s:any, i:number) => (
-                    <div key={i} onClick={() => setSolicitudSel(s)}
-                      style={{ padding:'14px 16px', background: solicitudSel?.id===s.id ? '#EFF6FF' : 'white', borderRadius:'10px', border:`1.5px solid ${solicitudSel?.id===s.id ? '#1D4ED8' : '#F0F0F0'}`, cursor:'pointer' }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'4px' }}>
-                        <p style={{ fontSize:'12px', fontWeight:700, color:'#0F2447', margin:0 }}>{s.nombre_empresa || s.nombre || '—'}</p>
-                        <span style={{ fontSize:'10px', color:'#888' }}>{s.id}</span>
+                <input value={busquedaContrato} onChange={e => setBusquedaContrato(e.target.value)}
+                  placeholder="Buscar por empresa, ID o tipo..."
+                  style={{ width:'100%', padding:'10px 14px', borderRadius:'9px', border:'1.5px solid #E8E8E8', fontSize:'13px', outline:'none', color:'#0F2447', marginBottom:'12px', boxSizing:'border-box' as any }} />
+                <div style={{ maxHeight:'240px', overflowY:'auto', display:'flex', flexDirection:'column', gap:'8px' }}>
+                  {solicitudes.filter((s:any) => s.estado !== 'Cerrado' && (
+                    !busquedaContrato || 
+                    s.id?.toLowerCase().includes(busquedaContrato.toLowerCase()) ||
+                    (s.nombre_empresa||s.nombre||'').toLowerCase().includes(busquedaContrato.toLowerCase()) ||
+                    (s.tipo_solicitud||'').toLowerCase().includes(busquedaContrato.toLowerCase())
+                  )).map((s:any, i:number) => (
+                    <div key={i} onClick={() => { setSolicitudSel(s); setClausulasSel([]) }}
+                      style={{ padding:'12px 16px', background: solicitudSel?.id===s.id ? '#EFF6FF' : 'white', borderRadius:'10px', border:`1.5px solid ${solicitudSel?.id===s.id ? '#1D4ED8' : '#F0F0F0'}`, cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                      <div>
+                        <p style={{ fontSize:'13px', fontWeight:700, color:'#0F2447', margin:'0 0 2px' }}>{s.nombre_empresa || s.nombre || '—'}</p>
+                        <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{s.tipo_solicitud||'—'} · {s.empresa_t1||'—'} · {s.estado}</p>
                       </div>
-                      <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{s.tipo_solicitud||'—'} · {s.empresa_t1||'—'}</p>
+                      <span style={{ fontSize:'11px', color:'#888', flexShrink:0, marginLeft:'12px' }}>{s.id}</span>
                     </div>
                   ))}
+                  {solicitudes.filter(s => s.estado !== 'Cerrado').length === 0 && (
+                    <p style={{ color:'#888', fontSize:'13px' }}>No hay contratos activos.</p>
+                  )}
                 </div>
-                {solicitudes.filter(s => s.estado !== 'Cerrado').length === 0 && (
-                  <p style={{ color:'#888', fontSize:'13px' }}>No hay contratos activos. Crea una solicitud primero.</p>
-                )}
               </div>
+
+              {/* PASO 1B — MODO */}
+              {solicitudSel && (
+                <div style={{ marginBottom:'24px' }}>
+                  <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>1b. Modo de negociación</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'12px' }}>
+                    {[
+                      { id:'completo', label:'Contrato completo', emoji:'📄', desc:'Negocia todo el contrato en una sola sesión' },
+                      { id:'clausula', label:'Cláusula específica', emoji:'🔍', desc:'Elige una o varias cláusulas para negociar' },
+                    ].map((m:any) => (
+                      <div key={m.id} onClick={() => setModoNeg(m.id)}
+                        style={{ padding:'12px 14px', background: modoNeg===m.id?'#EFF6FF':'white', borderRadius:'10px', border:`1.5px solid ${modoNeg===m.id?'#1D4ED8':'#F0F0F0'}`, cursor:'pointer' }}>
+                        <p style={{ fontSize:'13px', fontWeight:700, color:'#0F2447', margin:'0 0 4px' }}>{m.emoji} {m.label}</p>
+                        <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{m.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {modoNeg === 'clausula' && (
+                    <div>
+                      <p style={{ fontSize:'12px', color:'#888', margin:'0 0 8px' }}>Escribe las cláusulas a negociar (una por línea):</p>
+                      <textarea value={clausulasSel.join('\n')} onChange={e => setClausulasSel(e.target.value.split('\n'))}
+                        placeholder={"Ej:\nVigencia del contrato\nCondiciones de pago\nPenalizaciones"}
+                        style={{ width:'100%', minHeight:'100px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'12px', color:'#0F2447', resize:'vertical', outline:'none', fontFamily:'sans-serif', boxSizing:'border-box' as any }} />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* PASO 2 — ROL */}
               <div style={{ marginBottom:'24px' }}>
@@ -313,7 +352,7 @@ export default function Entrenamiento() {
                 </div>
               </div>
 
-              <button onClick={iniciarSesion} disabled={!solicitudSel || !rolClaude || !perfil}
+              <button onClick={iniciarSesion} disabled={!solicitudSel || !rolClaude || !perfil || !modoNeg}
                 style={{ background:'#0F2447', color:'white', border:'none', padding:'12px 32px', borderRadius:'10px', fontSize:'14px', fontWeight:700, cursor:'pointer', opacity:(!solicitudSel||!rolClaude||!perfil)?0.5:1, width:'100%' }}>
                 🥋 Iniciar simulación
               </button>
@@ -329,7 +368,7 @@ export default function Entrenamiento() {
                     {solicitudSel?.nombre_empresa || solicitudSel?.nombre} — {solicitudSel?.tipo_solicitud}
                   </p>
                   <p style={{ fontSize:'11px', color:'#888', margin:0 }}>
-                    {rolClaude === 'contraparte' ? '🏢 Claude = Contraparte | Tú = T1 Pagos' : '⚖️ Claude = T1 Pagos | Tú = Contraparte'} · 
+                    {rolClaude === 'contraparte' ? '🏢 Claude = Contraparte | Tú = T1' : '⚖️ Claude = T1 | Tú = Contraparte'} · 
                     {perfil === 'agresivo' ? ' 🦁 Agresivo' : perfil === 'colaborativo' ? ' 🤝 Colaborativo' : perfil === 'tecnico' ? ' 🔬 Técnico' : ' 🎭 Impredecible'}
                   </p>
                 </div>
@@ -344,7 +383,7 @@ export default function Entrenamiento() {
                   <div key={i} style={{ display:'flex', justifyContent: m.rol==='user'?'flex-end':'flex-start' }}>
                     <div style={{ maxWidth:'75%', padding:'12px 16px', borderRadius: m.rol==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px', background: m.rol==='user'?'#0F2447':'white', color: m.rol==='user'?'white':'#0F2447', fontSize:'13px', lineHeight:1.6, boxShadow:'0 1px 4px rgba(0,0,0,0.08)' }}>
                       <p style={{ margin:'0 0 4px', fontSize:'10px', fontWeight:700, opacity:0.7 }}>
-                        {m.rol==='user' ? 'Tú' : rolClaude==='contraparte'?'Contraparte':'T1 Pagos (Claude)'}
+                        {m.rol==='user' ? 'Tú' : rolClaude==='contraparte'?'Contraparte':'T1 (Claude)'}
                       </p>
                       <p style={{ margin:0, whiteSpace:'pre-wrap' }}>{m.texto}</p>
                     </div>
