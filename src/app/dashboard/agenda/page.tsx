@@ -113,50 +113,62 @@ export default function Agenda() {
   }
 
   const exportarMinuta = () => {
-    const contenido = [
-      `MINUTA LEGAL — T1 Pagos / Claro Pagos`,
-      `Fecha: ${fechaVista || fechaHoy}`,
-      `Elaboró: Jovanni Poceros`,
-      ``,
-      `=== RESUMEN AUTOMÁTICO ===`,
-      minuta?.generado_auto || '',
-      ``,
-      `=== NOTAS DEL DÍA ===`,
-      minutaTexto || '(sin notas)',
-    ].join('\n')
-    const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' })
+    const fecha = fechaVista || fechaHoy
+    const reporte = reporteGenerado || minuta?.generado_auto || ''
+    const notas = minutaTexto || ''
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte Legal ${fecha}</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Arial', sans-serif; color: #0F2447; padding: 40px; background: white; }
+    .header { border-bottom: 3px solid #E8321A; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .logo { font-size: 24px; font-weight: 900; color: #0F2447; letter-spacing: -0.5px; }
+    .logo span { color: #E8321A; }
+    .meta { text-align: right; font-size: 12px; color: #888; line-height: 1.6; }
+    .meta strong { color: #0F2447; font-size: 14px; }
+    .reporte { background: #F8FAFF; border-radius: 8px; padding: 24px; margin-bottom: 24px; border-left: 4px solid #1D4ED8; }
+    .reporte pre { font-family: 'Arial', sans-serif; font-size: 13px; line-height: 1.9; color: #0F2447; white-space: pre-wrap; }
+    .notas-section { margin-top: 24px; }
+    .notas-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 12px; }
+    .notas { background: white; border: 1px solid #E8E8E8; border-radius: 8px; padding: 20px; font-size: 13px; line-height: 1.8; min-height: 120px; color: #0F2447; white-space: pre-wrap; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #E8E8E8; font-size: 11px; color: #aaa; display: flex; justify-content: space-between; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="logo">T1 <span>Legal</span></div>
+      <div style="font-size:12px; color:#888; margin-top:4px">T1 Pagos / Claro Pagos</div>
+    </div>
+    <div class="meta">
+      <strong>Reporte Diario de Gestión Legal</strong><br>
+      Fecha: ${fecha}<br>
+      Elaboró: Jovanni Poceros<br>
+      Área: Legal
+    </div>
+  </div>
+  ${reporte ? '<div class="reporte"><pre>' + reporte + '</pre></div>' : '<p style="color:#888;font-size:13px">Sin reporte generado para este día.</p>'}
+  ${notas ? '<div class="notas-section"><div class="notas-title">Notas adicionales del día</div><div class="notas">' + notas + '</div></div>' : ''}
+  <div class="footer">
+    <span>T1 Legal — Sistema de Gestión Legal</span>
+    <span>Generado: ${new Date().toLocaleString('es-MX')}</span>
+  </div>
+</body>
+</html>`
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Minuta-T1Legal-${fechaVista || fechaHoy}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const win = window.open(url, '_blank')
+    if (win) {
+      win.onload = () => {
+        setTimeout(() => { win.print() }, 500)
+      }
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
-
-  const getDiasRestantes = (fecha: string) => Math.ceil((new Date(fecha).getTime() - hoy.getTime()) / (1000*60*60*24))
-  const getDiasTranscurridos = (fecha: string) => Math.ceil((hoy.getTime() - new Date(fecha).getTime()) / (1000*60*60*24))
-  const irA = (id: string) => window.location.href = `/dashboard/solicitudes/${id}`
-
-  const activas = solicitudes.filter(s => s.estado !== 'Cerrado')
-  const cerradas = solicitudes.filter(s => s.estado === 'Cerrado')
-  const urgentes = activas.filter(s => s.prioridad === 'Alta')
-  const oblVencidas = obligaciones.filter(o => getDiasRestantes(o.fecha_limite) < 0)
-  const oblProximas = obligaciones.filter(o => { const d = getDiasRestantes(o.fecha_limite); return d >= 0 && d <= 7 })
-  const temperatura = urgentes.length > 2 ? '🔴 Día crítico' : urgentes.length > 0 ? '🟡 Día activo' : '🟢 Día tranquilo'
-
-  const empresas = ['T1.com', 'Claro Pagos']
-
-  const Tab = ({ id, label }: any) => (
-    <button onClick={() => { setTab(id); if (id !== 'minuta') setFechaVista(null) }}
-      style={{ padding:'10px 20px', background:'none', border:'none', borderBottom:`2px solid ${tab===id?'#E8321A':'transparent'}`, color:tab===id?'#E8321A':'#888', fontWeight:tab===id?700:400, fontSize:'13px', cursor:'pointer', fontFamily:'sans-serif', whiteSpace:'nowrap' as any }}>
-      {label}
-    </button>
-  )
-
-  const toggleExp = (key: string) => setExpandido(prev => ({...prev, [key]: !prev[key]}))
-
   const generarReporte = async () => {
     setGenerando(true)
     try {
