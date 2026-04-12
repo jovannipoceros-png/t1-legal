@@ -44,16 +44,34 @@ export default function SolicitudDetalle() {
     } catch(e) { alert('No se pudo ver el documento') }
   }
 
+  const ordenEstados = ['Pendiente','En revision','En negociacion','Lista para firma','Cerrado']
+
   const cambiarEstado = async (estado: string) => {
     setActualizando(true)
     try {
+      const idxActual = ordenEstados.indexOf(solicitud?.estado || '')
+      const idxNuevo = ordenEstados.indexOf(estado)
+      const esRetorno = idxNuevo < idxActual
+
       await actualizarEstado(id, estado)
-      if (solicitud?.correo) {
-        fetch('/api/notificaciones', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tipo: 'estado_actualizado', correo: solicitud.correo, nombre: solicitud.nombre || 'Solicitante', id, estado })
-        }).catch(() => {})
+
+      if (esRetorno) {
+        // Registrar retorno en tracking automaticamente
+        const { agregarTracking } = await import('@/lib/supabase/solicitudes')
+        await agregarTracking(id, estado, `Retorno a ${estado} — desde ${solicitud?.estado}`)
+        // Notificacion interna automatica
+        await crearNotificacion(id, 'jovanni.poceros@t1.com', 'estado_actualizado',
+          `Retorno automatico: solicitud ${id} regreso a ${estado} desde ${solicitud?.estado}`,
+          { link: `/dashboard/solicitudes/${id}` })
+      } else {
+        // Avance normal - notificar al solicitante
+        if (solicitud?.correo) {
+          fetch('/api/notificaciones', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo: 'estado_actualizado', correo: solicitud.correo, nombre: solicitud.nombre || 'Solicitante', id, estado })
+          }).catch(() => {})
+        }
       }
       await cargar()
     } catch(e) { alert('Error al actualizar') }
