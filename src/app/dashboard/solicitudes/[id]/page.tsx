@@ -9,7 +9,7 @@ export default function SolicitudDetalle() {
   const id = params.id as string
   const [solicitud, setSolicitud] = useState<any>(null)
   const [tracking, setTracking] = useState<any[]>([])
-  const [trackingExpandido, setTrackingExpandido] = useState<Record<number,boolean>>({})
+  const [trackingExpandido, setTrackingExpandido] = useState<Record<string,boolean>>({})
   const [documentos, setDocumentos] = useState<any[]>([])
   const [cargando, setCargando] = useState(true)
   const [actualizando, setActualizando] = useState(false)
