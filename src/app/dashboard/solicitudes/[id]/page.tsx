@@ -365,9 +365,9 @@ export default function SolicitudDetalle() {
                                       <div style={{ marginTop:'6px' }}>
                                         <button onClick={() => setTrackingExpandido((prev:any) => ({...prev, [keyExp]: !prev[keyExp]}))}
                                           style={{ background:'none', border:'none', color:cfg.color, cursor:'pointer', fontSize:'11px', padding:0, fontWeight:600 }}>
-                                          {trackingExpandido[keyExp] ? 'Ocultar ▲' : 'Ver detalle ▼'}
+                                          {(trackingExpandido as any)[keyExp] ? 'Ocultar ▲' : 'Ver detalle ▼'}
                                         </button>
-                                        {trackingExpandido[keyExp] && (
+                                        {(trackingExpandido as any)[keyExp] && (
                                           <div style={{ marginTop:'6px', paddingTop:'6px', borderTop:`1px solid ${cfg.border}` }}>
                                             {t.nota.split('. ').filter((l:string) => l.trim()).map((linea:string, k:number) => (
                                               <p key={k} style={{ fontSize:'11px', color:'#555', margin:'0 0 3px', lineHeight:1.5 }}>
