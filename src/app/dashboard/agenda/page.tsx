@@ -186,10 +186,13 @@ export default function Agenda() {
       const infoRecibida = t.filter((x:any) => x.estado === 'Informacion recibida')
       const retornos = t.filter((x:any) => x.estado?.includes('Retorno') || x.nota?.includes('Retorno'))
 
-      const t1activas = activas.filter((s:any) => s.empresa_t1 === 'T1.com')
-      const claroActivas = activas.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
-      const t1urgentes = urgentes.filter((s:any) => s.empresa_t1 === 'T1.com')
-      const claroUrgentes = urgentes.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
+      const activas2 = sols.filter((s:any) => s.estado !== 'Cerrado')
+      const cerradas2 = sols.filter((s:any) => s.estado === 'Cerrado')
+      const t1activas = activas2.filter((s:any) => s.empresa_t1 === 'T1.com')
+      const claroActivas = activas2.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
+      const urgentes2 = activas2.filter((s:any) => s.prioridad === 'Alta')
+      const t1urgentes = urgentes2.filter((s:any) => s.empresa_t1 === 'T1.com')
+      const claroUrgentes = urgentes2.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
 
       const lineas = [
         `REPORTE DIARIO DE GESTIÓN LEGAL`,
@@ -199,15 +202,15 @@ export default function Agenda() {
         `${'─'.repeat(50)}`,
         ``,
         `📊 RESUMEN EJECUTIVO`,
-        `   Contratos activos:     ${activas.length}`,
-        `   Contratos cerrados:    ${cerradas.length}`,
+        `   Contratos activos:     ${activas2.length}`,
+        `   Contratos cerrados:    ${cerradas2.length}`,
         `   Cerrados hoy:          ${cerradasHoy.length}`,
         `   Movimientos del día:   ${t.length}`,
         ``,
         `🏢 T1.COM`,
         `   Activos: ${t1activas.length}  |  Urgentes: ${t1urgentes.length}`,
-        cerradasHoy.filter((s:any) => s.empresa_t1==='T1.com').length > 0
-          ? `   ✅ Cerrados hoy: ${cerradasHoy.filter((s:any) => s.empresa_t1==='T1.com').map((s:any) => s.id).join(', ')}`
+        cerradas2.filter((s:any) => s.empresa_t1==='T1.com' && s.fecha_cierre?.startsWith(hoyStr)).length > 0
+          ? `   ✅ Cerrados hoy: ${cerradas2.filter((s:any) => s.empresa_t1==='T1.com' && s.fecha_cierre?.startsWith(hoyStr)).map((s:any) => s.id).join(', ')}`
           : `   ✅ Sin cierres hoy`,
         t1urgentes.length > 0
           ? `   🔴 Urgentes: ${t1urgentes.map((s:any) => `${s.id} (${s.estado})`).join(', ')}`
@@ -215,8 +218,8 @@ export default function Agenda() {
         ``,
         `🏢 CLARO PAGOS`,
         `   Activos: ${claroActivas.length}  |  Urgentes: ${claroUrgentes.length}`,
-        cerradasHoy.filter((s:any) => s.empresa_t1==='Claro Pagos').length > 0
-          ? `   ✅ Cerrados hoy: ${cerradasHoy.filter((s:any) => s.empresa_t1==='Claro Pagos').map((s:any) => s.id).join(', ')}`
+        cerradas2.filter((s:any) => s.empresa_t1==='Claro Pagos' && s.fecha_cierre?.startsWith(hoyStr)).length > 0
+          ? `   ✅ Cerrados hoy: ${cerradas2.filter((s:any) => s.empresa_t1==='Claro Pagos' && s.fecha_cierre?.startsWith(hoyStr)).map((s:any) => s.id).join(', ')}`
           : `   ✅ Sin cierres hoy`,
         claroUrgentes.length > 0
           ? `   🔴 Urgentes: ${claroUrgentes.map((s:any) => `${s.id} (${s.estado})`).join(', ')}`
