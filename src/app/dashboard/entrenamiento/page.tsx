@@ -262,57 +262,79 @@ export default function Entrenamiento() {
               {/* PASO 1 — CONTRATO */}
               <div style={{ marginBottom:'24px' }}>
                 <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>1. Selecciona el contrato a negociar</p>
-                <input value={busquedaContrato} onChange={e => setBusquedaContrato(e.target.value)}
-                  placeholder="Buscar por empresa, ID o tipo..."
-                  style={{ width:'100%', padding:'10px 14px', borderRadius:'9px', border:'1.5px solid #E8E8E8', fontSize:'13px', outline:'none', color:'#0F2447', marginBottom:'12px', boxSizing:'border-box' as any }} />
-                <div style={{ maxHeight:'240px', overflowY:'auto', display:'flex', flexDirection:'column', gap:'8px' }}>
-                  {solicitudes.filter((s:any) => s.estado !== 'Cerrado' && (
-                    !busquedaContrato || 
-                    s.id?.toLowerCase().includes(busquedaContrato.toLowerCase()) ||
-                    (s.nombre_empresa||s.nombre||'').toLowerCase().includes(busquedaContrato.toLowerCase()) ||
-                    (s.tipo_solicitud||'').toLowerCase().includes(busquedaContrato.toLowerCase())
-                  )).map((s:any, i:number) => (
-                    <div key={i} onClick={() => { setSolicitudSel(s); setClausulasSel([]) }}
-                      style={{ padding:'12px 16px', background: solicitudSel?.id===s.id ? '#EFF6FF' : 'white', borderRadius:'10px', border:`1.5px solid ${solicitudSel?.id===s.id ? '#1D4ED8' : '#F0F0F0'}`, cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                      <div>
-                        <p style={{ fontSize:'13px', fontWeight:700, color:'#0F2447', margin:'0 0 2px' }}>{s.nombre_empresa || s.nombre || '—'}</p>
-                        <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{s.tipo_solicitud||'—'} · {s.empresa_t1||'—'} · {s.estado}</p>
-                      </div>
-                      <span style={{ fontSize:'11px', color:'#888', flexShrink:0, marginLeft:'12px' }}>{s.id}</span>
-                    </div>
-                  ))}
-                  {solicitudes.filter(s => s.estado !== 'Cerrado').length === 0 && (
-                    <p style={{ color:'#888', fontSize:'13px' }}>No hay contratos activos.</p>
-                  )}
+                {/* Busqueda */}
+                <div style={{ position:'relative' as any, marginBottom:'8px' }}>
+                  <input value={busquedaContrato} onChange={e => { setBusquedaContrato(e.target.value); if (!e.target.value) setSolicitudSel(null) }}
+                    placeholder="Buscar por empresa, ID o tipo de contrato..."
+                    style={{ width:'100%', padding:'11px 14px', borderRadius:'9px', border:`1.5px solid ${solicitudSel?'#1D4ED8':'#E8E8E8'}`, fontSize:'13px', outline:'none', color:'#0F2447', boxSizing:'border-box' as any }} />
+                  {solicitudSel && <span style={{ position:'absolute' as any, right:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', color:'#065F46', fontWeight:700 }}>✓ Seleccionado</span>}
                 </div>
-              </div>
 
-              {/* PASO 1B — MODO */}
-              {solicitudSel && (
-                <div style={{ marginBottom:'24px' }}>
-                  <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 12px' }}>1b. Modo de negociación</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'12px' }}>
-                    {[
-                      { id:'completo', label:'Contrato completo', emoji:'📄', desc:'Negocia todo el contrato en una sola sesión' },
-                      { id:'clausula', label:'Cláusula específica', emoji:'🔍', desc:'Elige una o varias cláusulas para negociar' },
-                    ].map((m:any) => (
-                      <div key={m.id} onClick={() => setModoNeg(m.id)}
-                        style={{ padding:'12px 14px', background: modoNeg===m.id?'#EFF6FF':'white', borderRadius:'10px', border:`1.5px solid ${modoNeg===m.id?'#1D4ED8':'#F0F0F0'}`, cursor:'pointer' }}>
-                        <p style={{ fontSize:'13px', fontWeight:700, color:'#0F2447', margin:'0 0 4px' }}>{m.emoji} {m.label}</p>
-                        <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{m.desc}</p>
+                {/* Resultados solo cuando hay busqueda y no hay seleccion */}
+                {busquedaContrato && !solicitudSel && (
+                  <div style={{ background:'white', border:'1px solid #E8E8E8', borderRadius:'10px', overflow:'hidden', marginBottom:'8px', boxShadow:'0 4px 12px rgba(0,0,0,0.08)' }}>
+                    {solicitudes.filter((s:any) => s.estado !== 'Cerrado' && (
+                      s.id?.toLowerCase().includes(busquedaContrato.toLowerCase()) ||
+                      (s.nombre_empresa||s.nombre||'').toLowerCase().includes(busquedaContrato.toLowerCase()) ||
+                      (s.tipo_solicitud||'').toLowerCase().includes(busquedaContrato.toLowerCase())
+                    )).slice(0,8).map((s:any, i:number) => (
+                      <div key={i} onClick={() => { setSolicitudSel(s); setBusquedaContrato(`${s.nombre_empresa||s.nombre||'—'} — ${s.id}`); setClausulasSel([]) }}
+                        style={{ padding:'12px 16px', borderBottom:'1px solid #F0F0F0', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center' }}
+                        onMouseEnter={e => (e.currentTarget.style.background='#F8F8F8')}
+                        onMouseLeave={e => (e.currentTarget.style.background='white')}>
+                        <div>
+                          <p style={{ fontSize:'13px', fontWeight:700, color:'#0F2447', margin:'0 0 2px' }}>{s.nombre_empresa||s.nombre||'—'}</p>
+                          <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{s.tipo_solicitud||'—'} · {s.empresa_t1||'—'} · {s.estado}</p>
+                        </div>
+                        <span style={{ fontSize:'11px', color:'#aaa', flexShrink:0, marginLeft:'12px' }}>{s.id}</span>
                       </div>
                     ))}
+                    {solicitudes.filter((s:any) => s.estado !== 'Cerrado' && (
+                      s.id?.toLowerCase().includes(busquedaContrato.toLowerCase()) ||
+                      (s.nombre_empresa||s.nombre||'').toLowerCase().includes(busquedaContrato.toLowerCase()) ||
+                      (s.tipo_solicitud||'').toLowerCase().includes(busquedaContrato.toLowerCase())
+                    )).length === 0 && (
+                      <p style={{ padding:'16px', color:'#888', fontSize:'13px', margin:0 }}>Sin resultados</p>
+                    )}
                   </div>
-                  {modoNeg === 'clausula' && (
+                )}
+
+                {/* Contrato seleccionado */}
+                {solicitudSel && (
+                  <div style={{ background:'#EFF6FF', borderRadius:'10px', padding:'14px 16px', border:'1.5px solid #BFDBFE', marginBottom:'16px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                     <div>
-                      <p style={{ fontSize:'12px', color:'#888', margin:'0 0 8px' }}>Escribe las cláusulas a negociar (una por línea):</p>
-                      <textarea value={clausulasSel.join('\n')} onChange={e => setClausulasSel(e.target.value.split('\n'))}
-                        placeholder={"Ej:\nVigencia del contrato\nCondiciones de pago\nPenalizaciones"}
-                        style={{ width:'100%', minHeight:'100px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'12px', color:'#0F2447', resize:'vertical', outline:'none', fontFamily:'sans-serif', boxSizing:'border-box' as any }} />
+                      <p style={{ fontSize:'13px', fontWeight:700, color:'#0F2447', margin:'0 0 2px' }}>{solicitudSel.nombre_empresa||solicitudSel.nombre||'—'}</p>
+                      <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{solicitudSel.tipo_solicitud||'—'} · {solicitudSel.empresa_t1||'—'} · {solicitudSel.id}</p>
                     </div>
-                  )}
-                </div>
-              )}
+                    <button onClick={() => { setSolicitudSel(null); setBusquedaContrato('') }}
+                      style={{ background:'none', border:'none', color:'#888', cursor:'pointer', fontSize:'16px' }}>✕</button>
+                  </div>
+                )}
+
+                {/* Modo negociacion - aparece solo cuando hay contrato */}
+                {solicitudSel && (
+                  <div style={{ marginTop:'4px' }}>
+                    <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 10px' }}>Modo de negociación</p>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom: modoNeg==='clausula'?'12px':'0' }}>
+                      {[
+                        { id:'completo', label:'Contrato completo', emoji:'📄', desc:'Negocia todo el contrato' },
+                        { id:'clausula', label:'Cláusula específica', emoji:'🔍', desc:'Selecciona cláusulas puntuales' },
+                      ].map((m:any) => (
+                        <div key={m.id} onClick={() => setModoNeg(m.id)}
+                          style={{ padding:'12px 14px', background: modoNeg===m.id?'#EFF6FF':'white', borderRadius:'10px', border:`1.5px solid ${modoNeg===m.id?'#1D4ED8':'#F0F0F0'}`, cursor:'pointer' }}>
+                          <p style={{ fontSize:'13px', fontWeight:700, color: modoNeg===m.id?'#1D4ED8':'#0F2447', margin:'0 0 3px' }}>{m.emoji} {m.label}</p>
+                          <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{m.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {modoNeg === 'clausula' && (
+                      <textarea value={clausulasSel.join('\n')} onChange={e => setClausulasSel(e.target.value.split('\n'))}
+                        placeholder={"Escribe las cláusulas a negociar, una por línea:\n\nEj: Condiciones de pago\nVigencia del contrato\nPenalizaciones"}
+                        style={{ width:'100%', minHeight:'90px', padding:'10px', borderRadius:'8px', border:'1.5px solid #E8E8E8', fontSize:'12px', color:'#0F2447', resize:'vertical', outline:'none', fontFamily:'sans-serif', boxSizing:'border-box' as any }} />
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* PASO 2 — ROL */}
               <div style={{ marginBottom:'24px' }}>
