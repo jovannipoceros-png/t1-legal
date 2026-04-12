@@ -21,6 +21,8 @@ export default function Agenda() {
   const [cargando, setCargando] = useState(true)
   const [historial, setHistorial] = useState<any[]>([])
   const [fechaVista, setFechaVista] = useState<string|null>(null)
+  const [reporteGenerado, setReporteGenerado] = useState('')
+  const [generando, setGenerando] = useState(false)
   const [expandido, setExpandido] = useState<Record<string,boolean>>({})
   const autoGuardado = useRef<any>(null)
 
@@ -112,6 +114,12 @@ export default function Agenda() {
 
   const exportarMinuta = () => {
     const contenido = [
+      `REPORTE DIARIO — T1 Pagos Legal`,
+      `Fecha: ${fechaVista || fechaHoy}`,
+      `Elaboró: Jovanni Poceros`,
+      ``,
+    ]
+    const contenidoReal = [
       `MINUTA LEGAL — T1 Pagos / Claro Pagos`,
       `Fecha: ${fechaVista || fechaHoy}`,
       `Elaboró: Jovanni Poceros`,
@@ -154,6 +162,92 @@ export default function Agenda() {
   )
 
   const toggleExp = (key: string) => setExpandido(prev => ({...prev, [key]: !prev[key]}))
+
+  const generarReporte = async () => {
+    setGenerando(true)
+    try {
+      const hoyStr = fechaHoy
+      const { data: trackingHoy } = await sb.from('tracking')
+        .select('*')
+        .gte('created_at', hoyStr + 'T00:00:00')
+        .lte('created_at', hoyStr + 'T23:59:59')
+        .order('created_at', { ascending: true })
+
+      const t = trackingHoy || []
+      const cerradasHoy = solicitudes.filter((s:any) => s.fecha_cierre?.startsWith(hoyStr))
+      const avancesHoy = t.filter((x:any) => !x.estado?.includes('Retorno') && x.estado !== 'Solicitud de informacion enviada' && x.estado !== 'Informacion recibida')
+      const infoEnviada = t.filter((x:any) => x.estado === 'Solicitud de informacion enviada')
+      const infoRecibida = t.filter((x:any) => x.estado === 'Informacion recibida')
+      const retornos = t.filter((x:any) => x.estado?.includes('Retorno') || x.nota?.includes('Retorno'))
+
+      const t1activas = activas.filter((s:any) => s.empresa_t1 === 'T1.com')
+      const claroActivas = activas.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
+      const t1urgentes = urgentes.filter((s:any) => s.empresa_t1 === 'T1.com')
+      const claroUrgentes = urgentes.filter((s:any) => s.empresa_t1 === 'Claro Pagos')
+
+      const lineas = [
+        `REPORTE DIARIO DE GESTIÓN LEGAL`,
+        `T1 Pagos — Legal`,
+        `Fecha: ${diaLabel}`,
+        `Elaboró: Jovanni Poceros`,
+        `${'─'.repeat(50)}`,
+        ``,
+        `📊 RESUMEN EJECUTIVO`,
+        `   Contratos activos:     ${activas.length}`,
+        `   Contratos cerrados:    ${cerradas.length}`,
+        `   Cerrados hoy:          ${cerradasHoy.length}`,
+        `   Movimientos del día:   ${t.length}`,
+        ``,
+        `🏢 T1.COM`,
+        `   Activos: ${t1activas.length}  |  Urgentes: ${t1urgentes.length}`,
+        cerradasHoy.filter((s:any) => s.empresa_t1==='T1.com').length > 0
+          ? `   ✅ Cerrados hoy: ${cerradasHoy.filter((s:any) => s.empresa_t1==='T1.com').map((s:any) => s.id).join(', ')}`
+          : `   ✅ Sin cierres hoy`,
+        t1urgentes.length > 0
+          ? `   🔴 Urgentes: ${t1urgentes.map((s:any) => `${s.id} (${s.estado})`).join(', ')}`
+          : `   🟢 Sin urgentes`,
+        ``,
+        `🏢 CLARO PAGOS`,
+        `   Activos: ${claroActivas.length}  |  Urgentes: ${claroUrgentes.length}`,
+        cerradasHoy.filter((s:any) => s.empresa_t1==='Claro Pagos').length > 0
+          ? `   ✅ Cerrados hoy: ${cerradasHoy.filter((s:any) => s.empresa_t1==='Claro Pagos').map((s:any) => s.id).join(', ')}`
+          : `   ✅ Sin cierres hoy`,
+        claroUrgentes.length > 0
+          ? `   🔴 Urgentes: ${claroUrgentes.map((s:any) => `${s.id} (${s.estado})`).join(', ')}`
+          : `   🟢 Sin urgentes`,
+        ``,
+        avancesHoy.length > 0 ? `📤 MOVIMIENTOS DEL DÍA (${avancesHoy.length})` : null,
+        ...avancesHoy.map((x:any) => `   • ${x.solicitud_id} — ${x.estado} (${new Date(x.created_at).toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' })})`),
+        avancesHoy.length > 0 ? `` : null,
+        infoEnviada.length > 0 ? `📋 SOLICITUDES DE INFORMACIÓN ENVIADAS (${infoEnviada.length})` : null,
+        ...infoEnviada.map((x:any) => `   • ${x.solicitud_id} — ${x.nota?.split('.')[0] || 'Documentos solicitados'}`),
+        infoEnviada.length > 0 ? `` : null,
+        infoRecibida.length > 0 ? `📥 INFORMACIÓN RECIBIDA DE SOLICITANTES (${infoRecibida.length})` : null,
+        ...infoRecibida.map((x:any) => `   • ${x.solicitud_id} — ${x.nota?.split('.')[0] || 'Documentos recibidos'}`),
+        infoRecibida.length > 0 ? `` : null,
+        retornos.length > 0 ? `🔄 RETORNOS (${retornos.length})` : null,
+        ...retornos.map((x:any) => `   • ${x.solicitud_id} — ${x.nota?.split('—')[0] || 'Retorno de etapa'}`),
+        retornos.length > 0 ? `` : null,
+        oblVencidas.length > 0 ? `⚠️  OBLIGACIONES VENCIDAS: ${oblVencidas.length}` : null,
+        oblProximas.length > 0 ? `⏰ VENCIMIENTOS ESTA SEMANA: ${oblProximas.length}` : null,
+        ``,
+        `${'─'.repeat(50)}`,
+        `Reporte generado: ${new Date().toLocaleString('es-MX')}`,
+      ].filter(x => x !== null).join('\n')
+
+      setReporteGenerado(lineas)
+      // Guardar en minuta
+      await sb.from('minutas').upsert([{
+        fecha: fechaHoy,
+        generado_auto: lineas,
+        contenido: minutaTexto,
+        updated_at: new Date().toISOString()
+      }], { onConflict: 'fecha' })
+      const { data: nueva } = await sb.from('minutas').select('*').eq('fecha', fechaHoy).maybeSingle()
+      if (nueva) setMinuta(nueva)
+    } catch(e) { console.error(e) }
+    setGenerando(false)
+  }
 
   if (cargando) return <div style={{ padding:'32px', fontFamily:'sans-serif', color:'#888' }}>Cargando...</div>
 
@@ -361,20 +455,27 @@ export default function Agenda() {
             </div>
           )}
 
+
           {/* TAB MINUTA */}
           {tab === 'minuta' && (
             <div>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px', flexWrap:'wrap', gap:'10px' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px', flexWrap:'wrap' as any, gap:'10px' }}>
                 <div>
                   <p style={{ fontSize:'16px', fontWeight:700, color:'#0F2447', margin:'0 0 4px' }}>
-                    {fechaVista ? `Minuta del ${fechaVista}` : `Minuta de hoy — ${diaLabel}`}
+                    {fechaVista ? `Reporte del ${fechaVista}` : `Reporte del día — ${diaLabel}`}
                   </p>
                   <p style={{ fontSize:'12px', color:'#888', margin:0 }}>
-                    {fechaVista ? 'Solo lectura — minuta histórica' : 'Auto-guardado cada 3 segundos'}
+                    {fechaVista ? 'Reporte histórico — solo lectura' : 'Auto-guardado cada 3 segundos'}
                   </p>
                 </div>
                 <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                   {guardado && <span style={{ fontSize:'12px', color:'#065F46', fontWeight:600 }}>✓ Guardado</span>}
+                  {!fechaVista && (
+                    <button onClick={generarReporte} disabled={generando}
+                      style={{ background:'#1D4ED8', color:'white', border:'none', padding:'9px 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', opacity:generando?0.7:1 }}>
+                      {generando ? 'Generando...' : '⚡ Generar reporte del día'}
+                    </button>
+                  )}
                   <button onClick={exportarMinuta}
                     style={{ background:'white', color:'#0F2447', border:'1.5px solid #E8E8E8', padding:'9px 16px', borderRadius:'8px', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>
                     Exportar .txt
@@ -382,7 +483,7 @@ export default function Agenda() {
                   {!fechaVista && (
                     <button onClick={() => guardarMinuta()} disabled={guardando}
                       style={{ background:'#0F2447', color:'white', border:'none', padding:'9px 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer', opacity:guardando?0.7:1 }}>
-                      {guardando ? 'Guardando...' : 'Guardar minuta'}
+                      {guardando ? 'Guardando...' : 'Guardar'}
                     </button>
                   )}
                   {fechaVista && (
@@ -394,29 +495,33 @@ export default function Agenda() {
                 </div>
               </div>
 
-              {minuta?.generado_auto && (
-                <div style={{ background:'#F0F7FF', borderRadius:'10px', padding:'16px 18px', marginBottom:'16px', border:'1px solid #BFDBFE' }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
-                    <p style={{ fontSize:'11px', fontWeight:700, color:'#1D4ED8', margin:0, textTransform:'uppercase' as any, letterSpacing:'0.05em' }}>Resumen automático del día</p>
-                  </div>
-                  <pre style={{ fontSize:'12px', color:'#0F2447', margin:0, whiteSpace:'pre-wrap', fontFamily:'sans-serif', lineHeight:1.7 }}>{minuta.generado_auto}</pre>
+              {reporteGenerado && (
+                <div style={{ background:'#F0F7FF', borderRadius:'12px', padding:'20px', marginBottom:'16px', border:'1px solid #BFDBFE' }}>
+                  <p style={{ fontSize:'11px', fontWeight:700, color:'#1D4ED8', margin:'0 0 12px', textTransform:'uppercase' as any, letterSpacing:'0.05em' }}>Reporte ejecutivo generado</p>
+                  <pre style={{ fontSize:'12px', color:'#0F2447', margin:0, whiteSpace:'pre-wrap', fontFamily:'sans-serif', lineHeight:1.8 }}>{reporteGenerado}</pre>
                 </div>
               )}
 
-              <div style={{ marginBottom:'8px' }}>
+              <div>
                 <p style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 8px' }}>
-                  {fechaVista ? 'Notas registradas' : 'Tus notas del día'}
+                  {fechaVista ? 'Notas registradas' : 'Notas adicionales del día'}
                 </p>
                 <textarea
                   value={minutaTexto}
                   onChange={e => !fechaVista && setMinutaTexto(e.target.value)}
-                  placeholder={`Escribe lo que hiciste hoy...\n\nEjemplo:\n• Revisé contrato C-2026-0932 con empresa ABC — acordamos reducir vigencia a 6 meses\n• Llamada con Legal de Claro Pagos — confirman condiciones de pago\n• Retorné C-2026-3174 a revisión — faltó poder notarial apostillado\n• Pendiente para mañana: revisar tarifas actualizadas y responder a contraparte`}
-                  style={{ width:'100%', minHeight:'280px', padding:'16px', borderRadius:'10px', border:'1.5px solid #E8E8E8', fontSize:'13px', color:'#0F2447', resize:'vertical', outline:'none', fontFamily:'sans-serif', lineHeight:1.7, boxSizing:'border-box' as any, background: fechaVista ? '#FAFAFA' : 'white' }}
+                  placeholder={`Agrega contexto adicional...
+
+Ejemplo:
+• Llamada con socio comercial ABC — acordaron reducir vigencia a 6 meses
+• Negociación tensa con Claro Pagos — contraoferta rechazada
+• Pendiente para mañana: revisar tarifas y responder a contraparte`}
+                  style={{ width:'100%', minHeight:'200px', padding:'16px', borderRadius:'10px', border:'1.5px solid #E8E8E8', fontSize:'13px', color:'#0F2447', resize:'vertical', outline:'none', fontFamily:'sans-serif', lineHeight:1.7, boxSizing:'border-box' as any, background: fechaVista ? '#FAFAFA' : 'white' }}
                   readOnly={!!fechaVista}
                 />
               </div>
             </div>
           )}
+
 
           {/* TAB HISTORIAL */}
           {tab === 'historial' && (
