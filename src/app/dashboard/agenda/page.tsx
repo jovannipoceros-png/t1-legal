@@ -113,12 +113,6 @@ export default function Agenda() {
   }
 
   const exportarMinuta = () => {
-    const contenido = [
-      `REPORTE DIARIO — T1 Pagos Legal`,
-      `Fecha: ${fechaVista || fechaHoy}`,
-      `Elaboró: Jovanni Poceros`,
-      ``,
-    ]
     const contenidoReal = [
       `MINUTA LEGAL — T1 Pagos / Claro Pagos`,
       `Fecha: ${fechaVista || fechaHoy}`,
