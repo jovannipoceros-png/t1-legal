@@ -29,19 +29,33 @@ export default function Negociacion() {
   const [modoDirecto, setModoDirecto] = useState(false)
 
   useEffect(() => {
-    obtenerSolicitudes()
-      .then(async data => {
-        const activas = (data||[]).filter((s:any) => s.estado==='En negociacion' || s.estado==='En revision')
-        setSolicitudes(activas)
-        setCargando(false)
-        const params = new URLSearchParams(window.location.search)
-        const idParam = params.get('id')
-        if (idParam) {
-          setModoDirecto(true)
-          const encontrada = (data||[]).find((s:any) => s.id === idParam)
-          if (encontrada) await abrirSolicitud(encontrada)
+    const cargar = async () => {
+      const data = await obtenerSolicitudes()
+      const activas = (data||[]).filter((s:any) => s.estado==='En negociacion' || s.estado==='En revision')
+      setSolicitudes(activas)
+      setCargando(false)
+      const params = new URLSearchParams(window.location.search)
+      const idParam = params.get('id')
+      if (idParam) {
+        setModoDirecto(true)
+        // Buscar en TODAS las solicitudes, no solo activas
+        const encontrada = (data||[]).find((s:any) => s.id === idParam)
+        if (encontrada) {
+          setSeleccionada(encontrada)
+          setTab('mesa')
+          const t = await obtenerTracking(encontrada.id)
+          setTracking(t||[])
+          const estadoInicial: Record<string,EstadoClausula> = {}
+          clausulasBase.forEach((c:string) => { estadoInicial[c] = 'pendiente' })
+          if (encontrada.vigencia) estadoInicial['Vigencia'] = 'acordada'
+          if (encontrada.contraprestacion) estadoInicial['Contraprestacion'] = 'acordada'
+          if (encontrada.plazo_pago) estadoInicial['Forma de pago'] = 'acordada'
+          if (encontrada.tipo_firma) estadoInicial['Firma electronica'] = 'acordada'
+          setClausulas(estadoInicial)
         }
-      })
+      }
+    }
+    cargar()
   }, [])
 
   const abrirSolicitud = async (s: any) => {
