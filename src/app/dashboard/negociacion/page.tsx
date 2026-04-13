@@ -26,6 +26,7 @@ export default function Negociacion() {
   const [nota, setNota] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [clausulas, setClausulas] = useState<Record<string,EstadoClausula>>({})
+  const [modoDirecto, setModoDirecto] = useState(false)
 
   useEffect(() => {
     obtenerSolicitudes()
@@ -33,10 +34,10 @@ export default function Negociacion() {
         const activas = (data||[]).filter((s:any) => s.estado==='En negociacion' || s.estado==='En revision')
         setSolicitudes(activas)
         setCargando(false)
-        // Si hay ?id= en la URL, abrir esa solicitud automaticamente
         const params = new URLSearchParams(window.location.search)
         const idParam = params.get('id')
         if (idParam) {
+          setModoDirecto(true)
           const encontrada = (data||[]).find((s:any) => s.id === idParam)
           if (encontrada) await abrirSolicitud(encontrada)
         }
