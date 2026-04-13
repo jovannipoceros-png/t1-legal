@@ -178,24 +178,7 @@ export default function Sistema() {
         </div>
       </div>
 
-      {/* KPIs */}
-      {stats && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'12px', marginBottom:'20px' }}>
-          {[
-            { label:'Solicitudes activas', val:stats.activas, color:'#0F2447' },
-            { label:'Contratos cerrados', val:stats.cerradas, color:'#065F46' },
-            { label:'Total solicitudes', val:stats.totalSols, color:'#1D4ED8' },
-            { label:'Usuarios', val:stats.usuarios, color:'#7C3AED' },
-          ].map((k,i) => (
-            <div key={i} style={{ background:'white', borderRadius:'12px', padding:'16px', border:'1px solid #F0F0F0', textAlign:'center' }}>
-              <p style={{ fontSize:'28px', fontWeight:700, color:k.color, margin:'0 0 4px' }}>{k.val}</p>
-              <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{k.label}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginBottom:'20px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginBottom:'20px' }}>
 
         {/* SERVICIOS */}
         <div style={{ background:'white', borderRadius:'14px', padding:'20px', border:'1px solid #F0F0F0' }}>
