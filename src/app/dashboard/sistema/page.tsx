@@ -5,6 +5,13 @@ import { createClient } from '@supabase/supabase-js'
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 export default function Sistema() {
+  const [autenticado, setAutenticado] = useState(false)
+  const [pasoAuth, setPasoAuth] = useState<'password'|'codigo'>('password')
+  const [password, setPassword] = useState('')
+  const [codigo, setCodigo] = useState('')
+  const [errorAuth, setErrorAuth] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [correoEnviado, setCorreoEnviado] = useState('')
   const [servicios, setServicios] = useState<any[]>([])
   const [incidentes, setIncidentes] = useState<any[]>([])
   const [stats, setStats] = useState<any>(null)
@@ -141,6 +148,102 @@ export default function Sistema() {
     pendiente:  { label:'Pendiente',   color:'#92400E', bg:'#FFFBEB', border:'#FDE68A' },
     configurado:{ label:'Configurado', color:'#065F46', bg:'#F0FDF4', border:'#BBF7D0' },
   }
+
+  const verificarPassword = async () => {
+    if (!password.trim()) return
+    setEnviando(true)
+    setErrorAuth('')
+    try {
+      const res = await fetch('/api/sistema', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'verificar_password', password })
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setPasoAuth('codigo')
+        setCorreoEnviado(data.correo)
+      } else {
+        setErrorAuth(data.error || 'Contraseña incorrecta')
+      }
+    } catch(e) { setErrorAuth('Error de conexión') }
+    setEnviando(false)
+  }
+
+  const verificarCodigo = async () => {
+    if (!codigo.trim()) return
+    setEnviando(true)
+    setErrorAuth('')
+    try {
+      const res = await fetch('/api/sistema', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'verificar_codigo', codigo })
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setAutenticado(true)
+        cargar()
+      } else {
+        setErrorAuth(data.error || 'Código incorrecto')
+      }
+    } catch(e) { setErrorAuth('Error de conexión') }
+    setEnviando(false)
+  }
+
+  if (!autenticado) return (
+    <div style={{ minHeight:'100vh', background:'#F7F8FA', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'sans-serif' }}>
+      <div style={{ background:'white', borderRadius:'20px', padding:'40px', width:'100%', maxWidth:'420px', boxShadow:'0 4px 24px rgba(0,0,0,0.08)', border:'1px solid #F0F0F0' }}>
+        <div style={{ textAlign:'center', marginBottom:'32px' }}>
+          <div style={{ background:'#0F2447', borderRadius:'16px', width:'56px', height:'56px', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', fontSize:'24px' }}>🔐</div>
+          <h1 style={{ color:'#0F2447', fontSize:'20px', fontWeight:700, margin:'0 0 8px' }}>Centro de Control</h1>
+          <p style={{ color:'#888', fontSize:'13px', margin:0 }}>
+            {pasoAuth === 'password' ? 'Acceso restringido — ingresa tu contraseña' : `Código enviado a ${correoEnviado}`}
+          </p>
+        </div>
+
+        {pasoAuth === 'password' && (
+          <div>
+            <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 8px' }}>Contraseña de administrador</p>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key==='Enter' && verificarPassword()}
+              placeholder="Ingresa tu contraseña..."
+              style={{ width:'100%', padding:'12px 16px', borderRadius:'10px', border:`1.5px solid ${errorAuth?'#FFD0CC':'#E8E8E8'}`, fontSize:'14px', outline:'none', color:'#0F2447', boxSizing:'border-box' as any, marginBottom:'16px' }} />
+            {errorAuth && <p style={{ color:'#E8321A', fontSize:'12px', margin:'0 0 12px' }}>{errorAuth}</p>}
+            <button onClick={verificarPassword} disabled={enviando || !password.trim()}
+              style={{ width:'100%', background:'#0F2447', color:'white', border:'none', padding:'13px', borderRadius:'10px', fontSize:'14px', fontWeight:700, cursor:'pointer', opacity:(enviando||!password.trim())?0.7:1 }}>
+              {enviando ? 'Verificando...' : 'Continuar →'}
+            </button>
+          </div>
+        )}
+
+        {pasoAuth === 'codigo' && (
+          <div>
+            <div style={{ background:'#EFF6FF', borderRadius:'10px', padding:'14px', marginBottom:'20px', border:'1px solid #BFDBFE', textAlign:'center' }}>
+              <p style={{ fontSize:'12px', color:'#1D4ED8', fontWeight:600, margin:'0 0 4px' }}>📧 Código enviado</p>
+              <p style={{ fontSize:'12px', color:'#555', margin:0 }}>Revisa tu correo en {correoEnviado}</p>
+            </div>
+            <p style={{ fontSize:'12px', fontWeight:700, color:'#888', textTransform:'uppercase' as any, letterSpacing:'0.05em', margin:'0 0 8px' }}>Código de verificación</p>
+            <input type="text" value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g,'').slice(0,6))}
+              onKeyDown={e => e.key==='Enter' && verificarCodigo()}
+              placeholder="000000"
+              maxLength={6}
+              style={{ width:'100%', padding:'12px 16px', borderRadius:'10px', border:`1.5px solid ${errorAuth?'#FFD0CC':'#E8E8E8'}`, fontSize:'24px', outline:'none', color:'#0F2447', boxSizing:'border-box' as any, marginBottom:'16px', textAlign:'center', letterSpacing:'8px', fontWeight:700 }} />
+            {errorAuth && <p style={{ color:'#E8321A', fontSize:'12px', margin:'0 0 12px' }}>{errorAuth}</p>}
+            <button onClick={verificarCodigo} disabled={enviando || codigo.length !== 6}
+              style={{ width:'100%', background:'#0F2447', color:'white', border:'none', padding:'13px', borderRadius:'10px', fontSize:'14px', fontWeight:700, cursor:'pointer', opacity:(enviando||codigo.length!==6)?0.7:1, marginBottom:'12px' }}>
+              {enviando ? 'Verificando...' : '🔓 Acceder al sistema'}
+            </button>
+            <button onClick={() => { setPasoAuth('password'); setErrorAuth(''); setCodigo('') }}
+              style={{ width:'100%', background:'none', border:'none', color:'#888', fontSize:'13px', cursor:'pointer', padding:'8px' }}>
+              ← Volver a contraseña
+            </button>
+            <p style={{ fontSize:'11px', color:'#aaa', textAlign:'center', margin:'12px 0 0' }}>El código expira en 10 minutos</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 
   if (cargando) return (
     <div style={{ padding:'32px', fontFamily:'sans-serif', display:'flex', alignItems:'center', gap:'12px', color:'#888' }}>
