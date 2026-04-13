@@ -27,6 +27,7 @@ export default function Negociacion() {
   const [enviando, setEnviando] = useState(false)
   const [clausulas, setClausulas] = useState<Record<string,EstadoClausula>>({})
   const [modoDirecto, setModoDirecto] = useState(false)
+  const [busquedaNeg, setBusquedaNeg] = useState('')
 
   useEffect(() => {
     const cargar = async () => {
@@ -121,18 +122,48 @@ export default function Negociacion() {
       <h1 style={{ color:'#0F2447', fontSize:'24px', fontWeight:700, margin:'0 0 4px' }}>Negociacion</h1>
       <p style={{ color:'#888', margin:'0 0 24px' }}>Mesa de negociacion — Flujo A y Flujo B</p>
 
-      <div style={{ display:'grid', gridTemplateColumns: modoDirecto ? '1fr' : '260px 1fr', gap:'24px' }}>
-        <div style={{ display: modoDirecto ? 'none' : 'block' }}>
-          <div style={{ background:'white', borderRadius:'16px', padding:'16px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
-            <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:700, margin:'0 0 12px' }}>SOLICITUDES ACTIVAS</p>
-            {cargando ? (
-              <p style={{ color:'#888', fontSize:'12px' }}>Cargando...</p>
-            ) : solicitudes.length===0 ? (
-              <div style={{ textAlign:'center', padding:'20px 0' }}>
-                <p style={{ fontSize:'24px', margin:'0 0 8px' }}>✅</p>
-                <p style={{ color:'#888', fontSize:'12px', margin:0 }}>Sin solicitudes activas</p>
-              </div>
-            ) : solicitudes.map((s,i) => (
+      {/* Buscador — solo si no venimos de URL directa */}
+      {!modoDirecto && (
+        <div style={{ marginBottom:'24px' }}>
+          <div style={{ position:'relative' as any }}>
+            <input value={busquedaNeg} onChange={e => setBusquedaNeg(e.target.value)}
+              placeholder="Buscar contrato por empresa, ID o tipo..."
+              style={{ width:'100%', padding:'12px 16px', borderRadius:'12px', border:'1.5px solid #E8E8E8', fontSize:'14px', outline:'none', color:'#0F2447', boxSizing:'border-box' as any }} />
+          </div>
+          {busquedaNeg && (
+            <div style={{ background:'white', borderRadius:'12px', border:'1px solid #E8E8E8', marginTop:'4px', boxShadow:'0 4px 12px rgba(0,0,0,0.08)', overflow:'hidden' }}>
+              {solicitudes.filter((s:any) =>
+                s.id?.toLowerCase().includes(busquedaNeg.toLowerCase()) ||
+                (s.nombre_empresa||s.nombre||'').toLowerCase().includes(busquedaNeg.toLowerCase()) ||
+                (s.tipo_solicitud||'').toLowerCase().includes(busquedaNeg.toLowerCase())
+              ).slice(0,6).map((s:any,i:number) => (
+                <div key={i} onClick={() => window.location.href=`/dashboard/negociacion?id=${s.id}`}
+                  style={{ padding:'12px 16px', borderBottom:'1px solid #F0F0F0', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center' }}
+                  onMouseEnter={e => (e.currentTarget.style.background='#F8F8F8')}
+                  onMouseLeave={e => (e.currentTarget.style.background='white')}>
+                  <div>
+                    <p style={{ fontSize:'13px', fontWeight:700, color:'#0F2447', margin:'0 0 2px' }}>{s.nombre_empresa||s.nombre||'Sin nombre'}</p>
+                    <p style={{ fontSize:'11px', color:'#888', margin:0 }}>{s.tipo_solicitud||'—'} · {s.empresa_t1||'—'} · {s.estado}</p>
+                  </div>
+                  <span style={{ fontSize:'11px', color:'#aaa', flexShrink:0, marginLeft:'12px' }}>{s.id}</span>
+                </div>
+              ))}
+              {solicitudes.filter((s:any) =>
+                s.id?.toLowerCase().includes(busquedaNeg.toLowerCase()) ||
+                (s.nombre_empresa||s.nombre||'').toLowerCase().includes(busquedaNeg.toLowerCase()) ||
+                (s.tipo_solicitud||'').toLowerCase().includes(busquedaNeg.toLowerCase())
+              ).length === 0 && (
+                <p style={{ padding:'16px', color:'#888', fontSize:'13px', margin:0 }}>Sin resultados</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:'24px' }}>
+        <div style={{ display:'none' }}>
+          <div>
+            {false && solicitudes.map((s,i) => (
               <div key={i} onClick={() => abrirSolicitud(s)}
                 style={{ padding:'12px', borderRadius:'10px', border:`1.5px solid ${seleccionada?.id===s.id?'#E8321A':'#F0F0F0'}`, marginBottom:'6px', cursor:'pointer', background:seleccionada?.id===s.id?'#FFF5F5':'#FAFAFA' }}>
                 <div style={{ display:'flex', gap:'5px', marginBottom:'5px' }}>
