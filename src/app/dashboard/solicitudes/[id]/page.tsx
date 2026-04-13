@@ -487,11 +487,11 @@ export default function SolicitudDetalle() {
                 style={{ background:'#0F2447', color:'white', border:'none', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
                 Ver expediente →
               </button>
-              <button onClick={() => window.location.href=`/dashboard/editor?id=${solicitud.id}`}
+              <button onClick={() => window.location.href=`/dashboard/editor/${solicitud.id}`}
                 style={{ background:'white', color:'#0F2447', border:'1px solid #E8E8E8', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
                 Abrir en editor →
               </button>
-              <button onClick={() => window.location.href=`/dashboard/negociacion?id=${solicitud.id}`}
+              <button onClick={() => window.location.href=`/dashboard/negociacion/${solicitud.id}`}
                 style={{ background:'white', color:'#7C3AED', border:'1px solid #E8E8E8', padding:'10px', borderRadius:'8px', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>
                 Ver negociacion →
               </button>
