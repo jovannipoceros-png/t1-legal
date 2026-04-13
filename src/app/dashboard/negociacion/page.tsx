@@ -29,10 +29,17 @@ export default function Negociacion() {
 
   useEffect(() => {
     obtenerSolicitudes()
-      .then(data => {
-        const activas = (data||[]).filter(s => s.estado==='En negociacion' || s.estado==='En revision')
+      .then(async data => {
+        const activas = (data||[]).filter((s:any) => s.estado==='En negociacion' || s.estado==='En revision')
         setSolicitudes(activas)
         setCargando(false)
+        // Si hay ?id= en la URL, abrir esa solicitud automaticamente
+        const params = new URLSearchParams(window.location.search)
+        const idParam = params.get('id')
+        if (idParam) {
+          const encontrada = (data||[]).find((s:any) => s.id === idParam)
+          if (encontrada) await abrirSolicitud(encontrada)
+        }
       })
   }, [])
 
