@@ -72,23 +72,23 @@ export default function Sistema() {
       const data = await res.json()
       const lat = Date.now() - t0
       if (data.error?.type === 'authentication_error') {
-        nuevos.push({ id:'claude', nombre:'Claude AI', desc:'Análisis e IA', estado:'pendiente', latencia:'—', icon:'🤖', accion:{ label:'Configurar API key', url:'https://vercel.com/jovannipoceros-png/t1-legal/settings/environment-variables' }, detalle:'API key pendiente de configurar' })
+        nuevos.push({ id:'claude', nombre:'Claude AI', desc:'Análisis e IA', estado:'pendiente', latencia:'—', icon:'🤖', accion:{ label:'Configurar API key', url:'https://vercel.com/dashboard' }, detalle:'API key pendiente de configurar' })
         nuevosIncidentes.push({ servicio:'Claude AI', mensaje:'API key no configurada — 6 módulos funcionan al 60%', hora:ts(), resuelto:false, nivel:'advertencia' })
       } else {
         nuevos.push({ id:'claude', nombre:'Claude AI', desc:'Análisis e IA', estado:'ok', latencia:`${lat}ms`, icon:'🤖', accion:null, detalle:'Todos los módulos de IA activos' })
       }
     } catch(e) {
-      nuevos.push({ id:'claude', nombre:'Claude AI', desc:'Análisis e IA', estado:'pendiente', latencia:'—', icon:'🤖', accion:{ label:'Configurar API key', url:'https://vercel.com/jovannipoceros-png/t1-legal/settings/environment-variables' }, detalle:'API key pendiente' })
+      nuevos.push({ id:'claude', nombre:'Claude AI', desc:'Análisis e IA', estado:'pendiente', latencia:'—', icon:'🤖', accion:{ label:'Configurar API key', url:'https://vercel.com/dashboard' }, detalle:'API key pendiente' })
     }
 
     // 4. Email Resend
     nuevos.push({ id:'resend', nombre:'Email', desc:'Notificaciones por correo', estado:'configurado', latencia:'—', icon:'📧', accion:{ label:'Verificar dominio', url:'https://resend.com/domains' }, detalle:'Dominio resend pendiente de verificar para envíos externos' })
 
     // 5. Vercel Deploy
-    nuevos.push({ id:'vercel', nombre:'Plataforma web', desc:'Vercel — t1-legal.vercel.app', estado:'ok', latencia:'—', icon:'🚀', accion:{ label:'Ver deployments', url:'https://vercel.com/jovannipoceros-png/t1-legal' }, detalle:'Última versión desplegada' })
+    nuevos.push({ id:'vercel', nombre:'Plataforma web', desc:'Vercel — t1-legal.vercel.app', estado:'ok', latencia:'—', icon:'🚀', accion:{ label:'Ver deployments', url:'https://vercel.com/dashboard' }, detalle:'Última versión desplegada' })
 
     // 6. Dominio
-    nuevos.push({ id:'dominio', nombre:'Dominio personalizado', desc:'legal.t1.com', estado:'pendiente', latencia:'—', icon:'🌐', accion:{ label:'Configurar dominio', url:'https://vercel.com/jovannipoceros-png/t1-legal/settings/domains' }, detalle:'Pendiente de configurar' })
+    nuevos.push({ id:'dominio', nombre:'Dominio personalizado', desc:'legal.t1.com', estado:'pendiente', latencia:'—', icon:'🌐', accion:{ label:'Configurar dominio', url:'https://vercel.com/dashboard' }, detalle:'Pendiente de configurar' })
 
     // Stats
     try {
@@ -113,8 +113,8 @@ export default function Sistema() {
     { label:'Supabase conectado', done: servicios.find(s=>s.id==='supabase')?.estado === 'ok' },
     { label:'Plataforma desplegada en Vercel', done: true },
     { label:'Email Resend configurado', done: true },
-    { label:'API key Claude activada', done: servicios.find(s=>s.id==='claude')?.estado === 'ok', url:'https://vercel.com/jovannipoceros-png/t1-legal/settings/environment-variables' },
-    { label:'Dominio legal.t1.com configurado', done: false, url:'https://vercel.com/jovannipoceros-png/t1-legal/settings/domains' },
+    { label:'API key Claude activada', done: servicios.find(s=>s.id==='claude')?.estado === 'ok', url:'https://vercel.com/dashboard' },
+    { label:'Dominio legal.t1.com configurado', done: false, url:'https://vercel.com/dashboard' },
     { label:'Dominio Resend verificado', done: false, url:'https://resend.com/domains' },
   ]
   const pctActivado = Math.round((checklist.filter(c=>c.done).length / checklist.length) * 100)
