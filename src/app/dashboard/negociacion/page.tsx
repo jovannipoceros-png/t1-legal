@@ -107,10 +107,10 @@ export default function Negociacion() {
       <h1 style={{ color:'#0F2447', fontSize:'24px', fontWeight:700, margin:'0 0 4px' }}>Negociacion</h1>
       <p style={{ color:'#888', margin:'0 0 24px' }}>Mesa de negociacion — Flujo A y Flujo B</p>
 
-      <div style={{ display:'grid', gridTemplateColumns:'260px 1fr', gap:'24px' }}>
+      <div style={{ display:'grid', gridTemplateColumns: modoDirecto ? '1fr' : '260px 1fr', gap:'24px' }}>
         <div>
           <div style={{ background:'white', borderRadius:'16px', padding:'16px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', border:'1px solid #F0F0F0' }}>
-            <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:700, margin:'0 0 12px' }}>SOLICITUDES ACTIVAS</p>
+            {!modoDirecto && <p style={{ color:'#0F2447', fontSize:'12px', fontWeight:700, margin:'0 0 12px' }}>SOLICITUDES ACTIVAS</p>}
             {cargando ? (
               <p style={{ color:'#888', fontSize:'12px' }}>Cargando...</p>
             ) : solicitudes.length===0 ? (
