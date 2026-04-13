@@ -26,6 +26,18 @@ export default function Expediente() {
   const [guardandoFirma, setGuardandoFirma] = useState(false)
   const [sugerencias, setSugerencias] = useState<any[]>([])
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const idParam = params.get('buscar')
+    if (idParam) {
+      setBusqueda(idParam)
+      obtenerSolicitudes().then(async data => {
+        const encontrada = (data||[]).find((s:any) => s.id === idParam)
+        if (encontrada) await abrirExpediente(encontrada)
+      })
+    }
+  }, [])
+
   const buscar = async () => {
     if (!busqueda.trim()) return
     setBuscando(true)
